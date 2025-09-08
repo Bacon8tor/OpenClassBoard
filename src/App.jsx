@@ -814,7 +814,7 @@ function saveScreen() {
         w.type === 'conversion' ? <ConversionWidget key={w.id} onRemove={() => removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : null
       ))}
 
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.7)', borderTop: '1px solid #ccc', padding: '8px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.7)', borderTop: '1px solid #ccc', padding: '4px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
         <button onClick={()=>addWidget('stoplight')}>Add Stoplight</button>
         <button onClick={()=>addWidget('clock')}>Add Clock</button>
         <button onClick={()=>addWidget('timer')}>Add Timer</button>
@@ -826,11 +826,11 @@ function saveScreen() {
 
         <button onClick={saveScreen}>Save Screen</button>
         <button onClick={() => {
-  setWidgets([]);
-  setBgUrl('');
-  setBgColor('#800cb6ff');
-  localStorage.removeItem('classroomScreen');
-}}>Reset Layout</button>
+          setWidgets([]);
+          setBgUrl('');
+          setBgColor('#800cb6ff');
+          localStorage.removeItem('classroomScreen');
+        }}>Reset Layout</button>
 
       </div>
     </div>
