@@ -119,20 +119,33 @@ function Stoplight({ onRemove, onRename }) {
     height: '40px',
     borderRadius: '50%',
     border: '2px solid #333',
-    margin: '6px 0',
+    margin: '8px 0',
     cursor: 'pointer',
     backgroundColor: c === color ? c : '#666'
   });
 
+  const boxStyle = {
+    width: '70px',
+    padding: '10px',
+    backgroundColor: '#222',
+    border: '3px solid #333',
+    borderRadius: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  };
+
   return (
     <div ref={ref}>
       <WidgetWrapper title="Stoplight" onRemove={onRemove} onRename={onRename}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={boxStyle}>
           <div onClick={() => setColor('red')} style={circleStyle('red')} />
           <div onClick={() => setColor('yellow')} style={circleStyle('yellow')} />
           <div onClick={() => setColor('green')} style={circleStyle('green')} />
         </div>
-        <div style={{ marginTop: '8px', fontSize: '14px' }}>Active: <b>{color}</b></div>
+        <div style={{ marginTop: '8px', fontSize: '14px' }}>
+          Active: <b>{color}</b>
+        </div>
       </WidgetWrapper>
     </div>
   );
@@ -162,7 +175,6 @@ function ClockWidget({ onRemove, onRename }) {
 function TimerWidget({ onRemove, onRename }) {
   const [running, setRunning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(5 * 60);
-  const [initialSeconds, setInitialSeconds] = useState(5 * 60);
   const { ref } = useDraggable({ x: 80, y: 260 });
   const intervalRef = useRef(null);
 
@@ -188,31 +200,54 @@ function TimerWidget({ onRemove, onRename }) {
     return `${mm}:${ss}`;
   };
 
-  function applyMinutes(m) {
-    const sec = Math.max(0, Math.floor(Number(m) || 0) * 60);
-    setSecondsLeft(sec);
-    setInitialSeconds(sec);
-  }
+  const parseTime = (str) => {
+    const parts = str.split(':');
+    let mm = 0, ss = 0;
+    if (parts.length === 2) {
+      mm = parseInt(parts[0]) || 0;
+      ss = parseInt(parts[1]) || 0;
+    } else {
+      mm = parseInt(parts[0]) || 0;
+    }
+    return mm * 60 + ss;
+  };
+
+  const handleManualChange = (e) => {
+    const sec = parseTime(e.target.value);
+    setSecondsLeft(Math.max(0, sec));
+  };
 
   return (
     <div ref={ref}>
       <WidgetWrapper title="Timer" onRemove={onRemove} onRename={onRename}>
-        <div style={{ fontSize: '28px', textAlign: 'center', fontFamily: 'monospace' }}>{format(secondsLeft)}</div>
-        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+        {/* Editable timer display */}
+        <input
+          value={format(secondsLeft)}
+          onChange={handleManualChange}
+          style={{
+            fontSize: '28px',
+            textAlign: 'center',
+            fontFamily: 'monospace',
+            width: '100px'
+          }}
+        />
+
+        {/* Controls */}
+        <div style={{ display: 'flex', gap: '8px', marginTop: '8px', justifyContent: 'center' }}>
           <button onClick={() => setRunning(r => !r)}>{running ? 'Pause' : 'Start'}</button>
-          <button onClick={() => { clearInterval(intervalRef.current); setRunning(false); setSecondsLeft(initialSeconds); }}>Reset</button>
+          <button onClick={() => { clearInterval(intervalRef.current); setRunning(false); setSecondsLeft(0); }}>Reset</button>
         </div>
-        <div style={{ fontSize: '12px', marginTop: '6px' }}>Set minutes:</div>
-        <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-          <input defaultValue={Math.floor(initialSeconds/60)} onBlur={(e)=>applyMinutes(e.target.value)} type="number" min="0" style={{ width: '50px' }} />
-          <button onClick={()=>{ setSecondsLeft(prev => prev + 60); setInitialSeconds(prev => prev + 60); }}>+1m</button>
+
+        {/* Adjust time */}
+        <div style={{ display: 'flex', gap: '6px', marginTop: '8px', justifyContent: 'center' }}>
+          <button onClick={() => setSecondsLeft(prev => Math.max(0, prev - 60))}>-1m</button>
+          <button onClick={() => setSecondsLeft(prev => prev + 60)}>+1m</button>
         </div>
       </WidgetWrapper>
     </div>
   );
 }
 
-// --- Poll Widget ---
 function PollWidget({ onRemove, onRename }) {
   const { ref } = useDraggable({ x: 200, y: 200 });
   const [options, setOptions] = useState(["Option 1", "Option 2"]);
@@ -274,55 +309,148 @@ function PollWidget({ onRemove, onRename }) {
 // --- Dice Roll Widget ---
 function DiceWidget({ onRemove, onRename }) {
   const { ref } = useDraggable({ x: 200, y: 200 });
-  const [value, setValue] = useState(1);
+  const [sides, setSides] = useState(6);   // number of sides
+  const [count, setCount] = useState(1);   // number of dice
+  const [results, setResults] = useState([1]);
 
   const rollDice = () => {
-    const result = Math.floor(Math.random() * 6) + 1;
-    setValue(result);
+    const newResults = Array.from({ length: count }, () =>
+      Math.floor(Math.random() * sides) + 1
+    );
+    setResults(newResults);
   };
 
   const diceStyle = {
-    width: '60px',
-    height: '60px',
+    width: '50px',
+    height: '50px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '24px',
+    fontSize: '18px',
     fontWeight: 'bold',
     borderRadius: '8px',
     backgroundColor: '#fff',
     border: '2px solid #333',
-    cursor: 'pointer',
-    userSelect: 'none',
-    margin: '12px auto'
+    margin: '6px',
+    userSelect: 'none'
   };
 
   return (
     <div ref={ref}>
       <WidgetWrapper title="Dice" onRemove={onRemove} onRename={onRename}>
-        <div style={diceStyle} onClick={rollDice}>
-          {value}
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {results.map((val, i) => (
+            <div key={i} style={diceStyle}>{val}</div>
+          ))}
         </div>
-        <button onClick={rollDice} style={{ display: 'block', margin: '0 auto', marginTop: '8px' }}>Roll</button>
+
+        <button onClick={rollDice} style={{ display: 'block', margin: '8px auto' }}>Roll</button>
+
+        <div style={{ marginTop: '8px', fontSize: '14px', textAlign: 'center' }}>
+          <label>
+            Dice: <input
+              type="number"
+              min="1"
+              value={count}
+              onChange={(e) => setCount(Math.max(1, Number(e.target.value)))}
+              style={{ width: '50px', marginLeft: '4px' }}
+            />
+          </label>
+          <br />
+          <label>
+            Sides: <input
+              type="number"
+              min="2"
+              value={sides}
+              onChange={(e) => setSides(Math.max(2, Number(e.target.value)))}
+              style={{ width: '50px', marginLeft: '4px' }}
+            />
+          </label>
+        </div>
       </WidgetWrapper>
     </div>
   );
 }
 
+
+// --- Background Controls ---
 // --- Background Controls ---
 function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
+  const [minimized, setMinimized] = useState(false);
+
+  const containerStyle = {
+    background: 'rgba(255,255,255,0.8)',
+    padding: '12px',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    width: '220px',
+    color: 'black'
+  };
+
   return (
-    <div style={{ background: 'rgba(255,255,255,0.8)', padding: '12px', border: '1px solid #ccc', borderRadius: '8px', width: '220px', color: 'black' }}>
-      <div style={{ fontWeight: '600', marginBottom: '6px' }}>Background</div>
-      <input placeholder="Image URL" onKeyDown={(e)=>{ if(e.key==='Enter') onSetUrl(e.target.value); }} style={{ width: '100%', marginBottom: '6px' }} />
-      <div style={{ fontSize: '12px' }}>Or upload an image:</div>
-      <input type="file" accept="image/*" onChange={(e)=>onFile(e.target.files && e.target.files[0])} style={{ marginBottom: '6px' }} />
-      <div style={{ fontSize: '12px' }}>Or pick a background color:</div>
-      <input type="color" value={color} onChange={(e)=>onColor(e.target.value)} style={{ marginTop: '4px', width: '48px', height: '32px', padding: 0 }} />
-      <button onClick={()=>onSetUrl('')} style={{ display: 'block', marginTop: '8px' }}>Clear</button>
+    <div style={containerStyle}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+        <div style={{ fontWeight: '600' }}>Background</div>
+        <button
+          onClick={() => setMinimized(m => !m)}
+          style={{
+            fontSize: '12px',
+            border: '1px solid #aaa',
+            borderRadius: '4px',
+            padding: '2px 6px',
+            cursor: 'pointer'
+          }}
+        >
+          {minimized ? '+' : '-'}
+        </button>
+      </div>
+
+      {!minimized && (
+        <>
+          <input
+            placeholder="Image URL"
+            onKeyDown={(e) => { if (e.key === 'Enter') onSetUrl(e.target.value); }}
+            style={{ width: '100%', marginBottom: '6px' }}
+          />
+          <div style={{ fontSize: '12px' }}>Or upload an image:</div>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => onFile(e.target.files && e.target.files[0])}
+            style={{ marginBottom: '6px' }}
+          />
+          <div style={{ fontSize: '12px' }}>Or pick a background color:</div>
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => onColor(e.target.value)}
+            style={{ marginTop: '4px', width: '48px', height: '32px', padding: 0 }}
+          />
+          <button
+            onClick={() => onSetUrl('')}
+            style={{ display: 'block', marginTop: '8px' }}
+          >
+            Clear
+          </button>
+        </>
+      )}
     </div>
   );
 }
+
+// function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
+//   return (
+//     <div style={{ background: 'rgba(255,255,255,0.8)', padding: '12px', border: '1px solid #ccc', borderRadius: '8px', width: '220px', color: 'black' }}>
+//       <div style={{ fontWeight: '600', marginBottom: '6px' }}>Background</div>
+//       <input placeholder="Image URL" onKeyDown={(e)=>{ if(e.key==='Enter') onSetUrl(e.target.value); }} style={{ width: '100%', marginBottom: '6px' }} />
+//       <div style={{ fontSize: '12px' }}>Or upload an image:</div>
+//       <input type="file" accept="image/*" onChange={(e)=>onFile(e.target.files && e.target.files[0])} style={{ marginBottom: '6px' }} />
+//       <div style={{ fontSize: '12px' }}>Or pick a background color:</div>
+//       <input type="color" value={color} onChange={(e)=>onColor(e.target.value)} style={{ marginTop: '4px', width: '48px', height: '32px', padding: 0 }} />
+//       <button onClick={()=>onSetUrl('')} style={{ display: 'block', marginTop: '8px' }}>Clear</button>
+//     </div>
+//   );
+// }
 
 // --- Main app ---
 export default function ClassroomScreen() {
