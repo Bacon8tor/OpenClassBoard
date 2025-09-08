@@ -84,8 +84,8 @@ function WidgetWrapper({ title, children, onRemove, onRename }) {
       marginBottom: '8px'
     },
     title: { fontWeight: '600', cursor: 'pointer' },
-    input: { border: '1px solid #ccc', borderRadius: '4px', padding: '2px 4px', fontSize: '14px' },
-    close: { fontSize: '12px', padding: '0 4px', marginLeft: '8px', border: '1px solid #aaa', borderRadius: '4px', cursor: 'pointer' }
+    input: { border: '1px solid #ccc', borderRadius: '4px', padding: '2px 4px', fontSize: '12px' },
+    close: { fontSize: '8px', padding: '0 4px', marginLeft: '8px', border: '1px solid #aaa', borderRadius: '4px', cursor: 'pointer' }
   };
 
   return (
@@ -443,6 +443,229 @@ function NamePickerWidget({ onRemove, onRename }) {
   );
 }
 
+// --- Image Widget (Resizable with Drag Handle) ---
+function ImageWidget({ onRemove, onRename }) {
+  const { ref } = useDraggable({ x: 250, y: 150 });
+  const [imgSrc, setImgSrc] = useState('');
+  const [size, setSize] = useState({ width: 200, height: 200 });
+  const resizingRef = useRef(false);
+
+  const handleFile = (file) => {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setImgSrc(url);
+  };
+
+  // mouse events for resizing
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!resizingRef.current) return;
+      setSize(prev => ({
+        width: Math.max(50, e.clientX - ref.current.getBoundingClientRect().left),
+        height: Math.max(50, e.clientY - ref.current.getBoundingClientRect().top)
+      }));
+    };
+
+    const onUp = () => {
+      resizingRef.current = false;
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
+  return (
+    <div ref={ref}>
+      <WidgetWrapper title="Image" onRemove={onRemove} onRename={onRename}>
+        <div
+          style={{
+            position: 'relative',
+            display: 'inline-block',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            overflow: 'hidden'
+          }}
+        >
+          {imgSrc ? (
+            <img
+              src={imgSrc}
+              alt="Widget"
+              style={{
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                display: 'block',
+                objectFit: 'contain',
+                background: '#fff'
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: `${size.width}px`,
+                height: `${size.height}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1px dashed #aaa',
+                color: '#555',
+                fontSize: '14px',
+                background: '#fafafa'
+              }}
+            >
+              No image loaded
+            </div>
+          )}
+
+          {/* Resize handle */}
+          <div
+            onMouseDown={() => (resizingRef.current = true)}
+            style={{
+              width: '16px',
+              height: '16px',
+              position: 'absolute',
+              right: '0',
+              bottom: '0',
+              cursor: 'se-resize',
+              background: 'rgba(0,0,0,0.3)',
+              borderTopLeftRadius: '4px'
+            }}
+          ></div>
+        </div>
+
+        {/* Controls */}
+        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <input
+            type="text"
+            placeholder="Image URL"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') setImgSrc(e.target.value);
+            }}
+            style={{ width: '100%' }}
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleFile(e.target.files && e.target.files[0])}
+          />
+        </div>
+      </WidgetWrapper>
+    </div>
+  );
+}
+
+// --- Conversion Widget with Liquid / Powder Selector ---
+function ConversionWidget({ onRemove, onRename }) {
+  const { ref } = useDraggable({ x: 300, y: 200 });
+  const [inputValue, setInputValue] = useState('');
+  const [fromUnit, setFromUnit] = useState('cups');
+  const [toUnit, setToUnit] = useState('ml');
+  const [ingredient, setIngredient] = useState('liquid'); // liquid, flour, sugar, cocoa
+  const [result, setResult] = useState(null);
+
+  const powderDensities = { flour: 120, sugar: 200, cocoa: 125 }; // grams per cup
+
+  const baseConversion = {
+    cups: { ml: 240, tbsp: 16, tsp: 48, oz: 8, g: 240, lb: 0.53, kg: 0.24 },
+    tbsp: { ml: 15, cups: 1/16, tsp: 3, oz: 0.5, g: 15, lb: 0.033, kg: 0.015 },
+    tsp: { ml: 5, cups: 1/48, tbsp: 1/3, oz: 0.1667, g: 5, lb: 0.011, kg: 0.005 },
+    ml: { cups: 1/240, tbsp: 1/15, tsp: 1/5, oz: 0.0338, g: 1, lb: 0.0022, kg: 0.001 },
+    oz: { cups: 1/8, tbsp: 2, tsp: 6, ml: 29.5735, g: 28.35, lb: 1/16, kg: 0.02835 },
+    g: { cups: 1/240, tbsp: 1/15, tsp: 1/5, ml: 1, oz: 1/28.35, lb: 0.0022, kg: 0.001 },
+    lb: { cups: 1/0.53, tbsp: 1/0.033, tsp: 1/0.011, ml: 453.6, oz: 16, g: 453.6, kg: 0.4536 },
+    kg: { cups: 1/0.24, tbsp: 1/0.015, tsp: 1/0.005, ml: 1000, oz: 35.274, g: 1000, lb: 2.2046 }
+  };
+
+  const getConversionFactor = (from, to, ingredientType='liquid') => {
+    // Powder conversion: cups ⇄ grams
+    if (ingredientType !== 'liquid') {
+      const density = powderDensities[ingredientType] || 120;
+      if (from === 'cups' && to === 'g') return density;
+      if (from === 'g' && to === 'cups') return 1 / density;
+    }
+
+    if (!baseConversion[from] || !baseConversion[from][to]) {
+      throw new Error('Conversion not supported');
+    }
+
+    return baseConversion[from][to];
+  };
+
+  const convert = () => {
+    const value = parseFloat(inputValue);
+    if (isNaN(value)) {
+      setResult('Invalid input');
+      return;
+    }
+
+    try {
+      const factor = getConversionFactor(fromUnit, toUnit, ingredient);
+      setResult((value * factor).toFixed(2) + ' ' + toUnit);
+    } catch (e) {
+      setResult(e.message);
+    }
+  };
+
+  const unitOptions = ['cups','tbsp','tsp','ml','oz','g','lb','kg'];
+  const ingredientOptions = ['liquid','flour','sugar','cocoa'];
+
+  return (
+    <div ref={ref}>
+      <WidgetWrapper title="Conversion" onRemove={onRemove} onRename={onRename}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Input */}
+          <input
+            type="number"
+            placeholder="Enter value"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            style={{ padding: '4px' }}
+          />
+
+          {/* Ingredient type selector */}
+          <select value={ingredient} onChange={e=>setIngredient(e.target.value)}>
+            {ingredientOptions.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+
+          {/* Unit selectors */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <select value={fromUnit} onChange={(e) => setFromUnit(e.target.value)}>
+              {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+            <span style={{ fontWeight: 'bold' }}>→</span>
+            <select value={toUnit} onChange={(e) => setToUnit(e.target.value)}>
+              {unitOptions.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
+
+          {/* Convert button */}
+          <button onClick={convert}>Convert</button>
+
+          {/* Result */}
+          {result && (
+            <div style={{
+              marginTop: '8px',
+              padding: '6px',
+              border: '1px solid #ccc',
+              borderRadius: '6px',
+              background: '#f9f9f9',
+              fontWeight: 'bold',
+              textAlign: 'center'
+            }}>
+              {result}
+            </div>
+          )}
+        </div>
+      </WidgetWrapper>
+    </div>
+  );
+}
+
+
 
 // --- Background Controls ---
 function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
@@ -586,7 +809,9 @@ function saveScreen() {
         w.type === 'timer' ? <TimerWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> :
         w.type === 'poll' ? <PollWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> : 
         w.type === 'dice' ? <DiceWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : 
-        w.type === 'namepicker' ? <NamePickerWidget key={w.id} onRemove={() => removeWidget(w.id)} onRename={(t) => renameWidget(w.id, t)} /> : null
+        w.type === 'namepicker' ? <NamePickerWidget key={w.id} onRemove={() => removeWidget(w.id)} onRename={(t) => renameWidget(w.id, t)} /> :
+        w.type === 'image' ? <ImageWidget key={w.id} onRemove={() => removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : 
+        w.type === 'conversion' ? <ConversionWidget key={w.id} onRemove={() => removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : null
       ))}
 
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.7)', borderTop: '1px solid #ccc', padding: '8px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
@@ -595,7 +820,9 @@ function saveScreen() {
         <button onClick={()=>addWidget('timer')}>Add Timer</button>
         <button onClick={()=>addWidget('poll')}>Add Poll</button>
         <button onClick={() => addWidget('dice')}>Add Dice</button>
+        <button onClick={() => addWidget('conversion')}>Add Conversion</button>
         <button onClick={() => addWidget('namepicker')}>Add Name Picker</button>
+        <button onClick={() => addWidget('image')}>Add Image</button>
 
         <button onClick={saveScreen}>Save Screen</button>
         <button onClick={() => {
