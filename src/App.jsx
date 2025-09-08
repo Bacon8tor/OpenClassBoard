@@ -271,6 +271,44 @@ function PollWidget({ onRemove, onRename }) {
   );
 }
 
+// --- Dice Roll Widget ---
+function DiceWidget({ onRemove, onRename }) {
+  const { ref } = useDraggable({ x: 200, y: 200 });
+  const [value, setValue] = useState(1);
+
+  const rollDice = () => {
+    const result = Math.floor(Math.random() * 6) + 1;
+    setValue(result);
+  };
+
+  const diceStyle = {
+    width: '60px',
+    height: '60px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '24px',
+    fontWeight: 'bold',
+    borderRadius: '8px',
+    backgroundColor: '#fff',
+    border: '2px solid #333',
+    cursor: 'pointer',
+    userSelect: 'none',
+    margin: '12px auto'
+  };
+
+  return (
+    <div ref={ref}>
+      <WidgetWrapper title="Dice" onRemove={onRemove} onRename={onRename}>
+        <div style={diceStyle} onClick={rollDice}>
+          {value}
+        </div>
+        <button onClick={rollDice} style={{ display: 'block', margin: '0 auto', marginTop: '8px' }}>Roll</button>
+      </WidgetWrapper>
+    </div>
+  );
+}
+
 // --- Background Controls ---
 function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
   return (
@@ -294,12 +332,32 @@ export default function ClassroomScreen() {
 
   const [widgets, setWidgets] = useState([]);
 
-  useEffect(()=>{
-    return ()=>{
-      if(bgFileObjectUrl) URL.revokeObjectURL(bgFileObjectUrl);
-    };
-  }, [bgFileObjectUrl]);
+  // useEffect(()=>{
+  //   return ()=>{
+  //     if(bgFileObjectUrl) URL.revokeObjectURL(bgFileObjectUrl);
+  //   };
+  // }, [bgFileObjectUrl]);
+// --- Inside ClassroomScreen ---
+useEffect(() => {
+  // Load saved state on mount
+  const saved = localStorage.getItem('classroomScreen');
+  if (saved) {
+    const data = JSON.parse(saved);
+    setWidgets(data.widgets || []);
+    setBgUrl(data.bgUrl || '');
+    setBgColor(data.bgColor || '#800cb6ff');
+  }
+}, []);
 
+function saveScreen() {
+  const data = {
+    widgets,
+    bgUrl,
+    bgColor
+  };
+  localStorage.setItem('classroomScreen', JSON.stringify(data));
+  alert('Screen layout saved!');
+}
   function handleFile(file){
     if(!file) return;
     const url = URL.createObjectURL(file);
@@ -341,7 +399,8 @@ export default function ClassroomScreen() {
         w.type === 'stoplight' ? <Stoplight key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> :
         w.type === 'clock' ? <ClockWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> :
         w.type === 'timer' ? <TimerWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> :
-        w.type === 'poll' ? <PollWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> : null
+        w.type === 'poll' ? <PollWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> : 
+        w.type === 'dice' ? <DiceWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : null
       ))}
 
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.7)', borderTop: '1px solid #ccc', padding: '8px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
@@ -349,6 +408,16 @@ export default function ClassroomScreen() {
         <button onClick={()=>addWidget('clock')}>Add Clock</button>
         <button onClick={()=>addWidget('timer')}>Add Timer</button>
         <button onClick={()=>addWidget('poll')}>Add Poll</button>
+        <button onClick={() => addWidget('dice')}>Add Dice</button>
+
+        <button onClick={saveScreen}>Save Screen</button>
+        <button onClick={() => {
+  setWidgets([]);
+  setBgUrl('');
+  setBgColor('#800cb6ff');
+  localStorage.removeItem('classroomScreen');
+}}>Reset Layout</button>
+
       </div>
     </div>
   );
