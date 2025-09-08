@@ -372,8 +372,78 @@ function DiceWidget({ onRemove, onRename }) {
   );
 }
 
+// --- Name Picker Widget ---
+function NamePickerWidget({ onRemove, onRename }) {
+  const { ref } = useDraggable({ x: 200, y: 300 });
+  const [inputText, setInputText] = useState('');
+  const [names, setNames] = useState([]);
+  const [picked, setPicked] = useState(null);
+  const [excludePicked, setExcludePicked] = useState(false);
 
-// --- Background Controls ---
+  const loadNames = () => {
+    const list = inputText
+      .split(',')
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
+    setNames(list);
+    setPicked(null);
+  };
+
+  const pickRandom = () => {
+    if (names.length === 0) return;
+
+    const choice = names[Math.floor(Math.random() * names.length)];
+    setPicked(choice);
+
+    if (excludePicked) {
+      setNames(prev => prev.filter(n => n !== choice));
+    }
+  };
+
+  return (
+    <div ref={ref}>
+      <WidgetWrapper title="Name Picker" onRemove={onRemove} onRename={onRename}>
+        <textarea
+          placeholder="Enter names, separated by commas"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          rows={3}
+          style={{ width: '100%', marginBottom: '8px' }}
+        />
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+          <button onClick={loadNames}>Load Names</button>
+          <button onClick={pickRandom} disabled={names.length === 0}>Pick Random</button>
+        </div>
+
+        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+          <input
+            type="checkbox"
+            checked={excludePicked}
+            onChange={(e) => setExcludePicked(e.target.checked)}
+          />
+          Exclude already picked names
+        </label>
+
+        {picked && (
+          <div style={{
+            marginTop: '8px',
+            padding: '8px',
+            background: '#f0f0f0',
+            border: '1px solid #ccc',
+            borderRadius: '6px',
+            textAlign: 'center',
+            fontWeight: 'bold'
+          }}>
+            🎉 {picked} 🎉
+          </div>
+        )}
+      </WidgetWrapper>
+    </div>
+  );
+}
+
+
 // --- Background Controls ---
 function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
   const [minimized, setMinimized] = useState(false);
@@ -438,19 +508,6 @@ function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
   );
 }
 
-// function BackgroundControls({ onSetUrl, onFile, onColor, color }) {
-//   return (
-//     <div style={{ background: 'rgba(255,255,255,0.8)', padding: '12px', border: '1px solid #ccc', borderRadius: '8px', width: '220px', color: 'black' }}>
-//       <div style={{ fontWeight: '600', marginBottom: '6px' }}>Background</div>
-//       <input placeholder="Image URL" onKeyDown={(e)=>{ if(e.key==='Enter') onSetUrl(e.target.value); }} style={{ width: '100%', marginBottom: '6px' }} />
-//       <div style={{ fontSize: '12px' }}>Or upload an image:</div>
-//       <input type="file" accept="image/*" onChange={(e)=>onFile(e.target.files && e.target.files[0])} style={{ marginBottom: '6px' }} />
-//       <div style={{ fontSize: '12px' }}>Or pick a background color:</div>
-//       <input type="color" value={color} onChange={(e)=>onColor(e.target.value)} style={{ marginTop: '4px', width: '48px', height: '32px', padding: 0 }} />
-//       <button onClick={()=>onSetUrl('')} style={{ display: 'block', marginTop: '8px' }}>Clear</button>
-//     </div>
-//   );
-// }
 
 // --- Main app ---
 export default function ClassroomScreen() {
@@ -528,7 +585,8 @@ function saveScreen() {
         w.type === 'clock' ? <ClockWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> :
         w.type === 'timer' ? <TimerWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> :
         w.type === 'poll' ? <PollWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(title)=>renameWidget(w.id,title)} /> : 
-        w.type === 'dice' ? <DiceWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : null
+        w.type === 'dice' ? <DiceWidget key={w.id} onRemove={()=>removeWidget(w.id)} onRename={(t)=>renameWidget(w.id,t)} /> : 
+        w.type === 'namepicker' ? <NamePickerWidget key={w.id} onRemove={() => removeWidget(w.id)} onRename={(t) => renameWidget(w.id, t)} /> : null
       ))}
 
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,0.7)', borderTop: '1px solid #ccc', padding: '8px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
@@ -537,6 +595,7 @@ function saveScreen() {
         <button onClick={()=>addWidget('timer')}>Add Timer</button>
         <button onClick={()=>addWidget('poll')}>Add Poll</button>
         <button onClick={() => addWidget('dice')}>Add Dice</button>
+        <button onClick={() => addWidget('namepicker')}>Add Name Picker</button>
 
         <button onClick={saveScreen}>Save Screen</button>
         <button onClick={() => {
