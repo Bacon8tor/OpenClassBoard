@@ -11,7 +11,7 @@ import ConversionWidget from "./components/widgets/ConversionWidget";
 
 import BottomBar from "./components/BottomBar";
 
-export default function ClassroomScreen() {
+export default function OpenClassScreen() {
   const [bgUrl, setBgUrl] = useState("");
   const [bgColor, setBgColor] = useState("#800cb6ff");
   const [widgets, setWidgets] = useState([]);
@@ -42,7 +42,7 @@ export default function ClassroomScreen() {
 
   // Load saved layout
   useEffect(() => {
-    const saved = localStorage.getItem("classroomScreen");
+    const saved = localStorage.getItem("openClassBoard");
     if (saved) {
       const data = JSON.parse(saved);
       setWidgets(data.widgets || []);
