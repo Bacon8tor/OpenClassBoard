@@ -204,11 +204,15 @@ export default function OpenClassScreen() {
             </button>
             <br />
             <br />
-            <div justifyContent="center">
+            <div style = {{ justifyContent: "center" }} >
               <a href="https://www.buymeacoffee.com/bacon8tor">
               <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
               </a>
             </div>
+            <div style={{ fontSize: 12, color: "#555", textAlign: "center" }}>
+              <p>OpenClassBoard was made and is maintained by bacon8tor, a solo developer. If you find it useful, please consider supporting my work.
+              The Code is Opensource on  <a href="https://github.com/Bacon8tor/OpenClassBoard">Github</a></p>
+          </div>
           </div>
         )}
       </div>
