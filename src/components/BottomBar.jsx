@@ -63,7 +63,7 @@ export default function BottomBar({
             display: "flex",
             justifyContent: "center",
             gap: "12px",
-            flexWrap: "wrap",
+            flexWrap: "wrap", 
             width: "100%"
           }}
         >
