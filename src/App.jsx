@@ -164,38 +164,6 @@ export default function ClassroomScreen() {
               </button>
             )}
 
-            {/* Widget Theme */}
-            {/* <label>Widget Theme:</label>
-            <select
-              value={theme}
-              onChange={e => setTheme(e.target.value)}
-              style={{ width: "100%", marginBottom: 6 }}
-            >
-              <option value="glass">Glass</option>
-              <option value="noFill">No Fill</option>
-              <option value="custom">Custom</option>
-            </select>
-
-            {theme === "custom" && (
-              <div style={{ marginBottom: 6 }}>
-                <label>Background Color:</label>
-                <input
-                  type="color"
-                  value={customStyle.bgColor}
-                  onChange={e => setCustomStyle(s => ({ ...s, bgColor: e.target.value }))}
-                  style={{ marginLeft: 6 }}
-                />
-                <br />
-                <label>Font Color:</label>
-                <input
-                  type="color"
-                  value={customStyle.fontColor}
-                  onChange={e => setCustomStyle(s => ({ ...s, fontColor: e.target.value }))}
-                  style={{ marginLeft: 6 }}
-                />
-              </div>
-            )} */}
-
             {/* Save/Load */}
             <input
               type="text"

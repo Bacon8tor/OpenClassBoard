@@ -54,7 +54,7 @@ export default function BottomBar({
         >
           {barMinimized ? "▲" : "▼"}
         </button>
-        <span style={{ fontWeight: 600, fontSize: 16 }}>OpenClassScreen</span>
+        <span style={{ fontWeight: 600, fontSize: 16 }}>OpenClassBoard</span>
       </div>
 
       {!barMinimized && (
