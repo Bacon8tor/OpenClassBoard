@@ -120,7 +120,7 @@ export default function ClassroomScreen() {
       {/* Settings */}
       <div style={{ position: "absolute", top: 8, right: 8 }}>
         <button
-          style={{ ...glassButtonStyle, borderRadius: "50%", width: 40, height: 40 }}
+          style={{ ...glassButtonStyle, borderRadius: "50%", width: 40, height: 40, zIndex: 9999 }}
           onClick={() => setSettingsOpen(o => !o)}
         >
           ⚙
@@ -136,7 +136,8 @@ export default function ClassroomScreen() {
               borderRadius: 8,
               padding: 12,
               width: 260,
-              color: "black"
+              color: "black",
+              zIndex: 9999 
             }}
           >
             {/* Background */}
