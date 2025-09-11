@@ -69,7 +69,7 @@ export default function PollWidget({ onRemove, onRename, position, registerRef, 
                 onKeyDown={e => { if (e.key === "Enter") applyRename(o); }}
                 style={{ width: "80px" }}
               />
-              <button style={glassButtonStyle} onClick={() => deleteOption(o)}></button>
+              <button style={glassButtonStyle} onClick={() => deleteOption(o)}>X</button>
             </div>
           ))}
         </div>
