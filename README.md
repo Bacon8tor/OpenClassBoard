@@ -1,6 +1,6 @@
-# OpenClassScreen
+# OpenClassBoard
 
-OpenClassScreen is a dynamic, interactive classroom display application built with React. It allows teachers to create a customizable digital classroom board with draggable and resizable widgets such as clocks, polls, dice, and unit converters. The app is designed to make teaching more interactive and engaging for students.
+OpenClassBoard is a dynamic, interactive classroom display application built with React. It allows teachers to create a customizable digital classroom board with draggable and resizable widgets such as clocks, polls, dice, and unit converters. The app is designed to make teaching more interactive and engaging for students.
 
 ## Features
 
@@ -30,8 +30,8 @@ OpenClassScreen is a dynamic, interactive classroom display application built wi
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/OpenClassScreen.git
-cd OpenClassScreen
+git clone https://github.com/yourusername/OpenClassBoard.git
+cd OpenClassBoard
 ```
 
 2. Install dependencies:
@@ -55,13 +55,11 @@ Open [http://localhost:5173](http://localhost:5173) in your browser to view the 
 ### Docker Setup
 
 ```bash
-docker build -t classroom-screen:dev .
-docker run -p 5173:5173 classroom-screen:dev
+docker build -t openclassboard:latest .
+docker run -p 5173:5173 openclassboard:latest
 ```
 
-## Deployment
 
-You can host the app on **AWS Amplify**, **Netlify**, **Vercel**, or any static hosting platform. Ensure the `build` folder is deployed.
 
 ## Usage
 
@@ -86,7 +84,18 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Acknowledgments
 
+This project uses the following libraries and tools:
+
 * React
+* React-DOM
 * Vite
+* @vitejs/plugin-react
 * TailwindCSS (if used)
-* Any other libraries you used (e.g., for drag & drop, QR code generation)
+* ESLint
+* @eslint/js
+* eslint-plugin-react-hooks
+* eslint-plugin-react-refresh
+* @types/react
+* @types/react-dom
+* globals
+
