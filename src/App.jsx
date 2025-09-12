@@ -210,7 +210,7 @@ export default function OpenClassScreen() {
               </a>
             </div>
             <div style={{ fontSize: 12, color: "#555", textAlign: "center" }}>
-              <p>OpenClassBoard was made and is maintained by bacon8tor, a solo developer. If you find it useful, please consider supporting my work.
+              <p>OpenClassBoard was made and is maintained by a solo developer. If you find it useful, please consider supporting my work.
               The Code is Opensource on  <a href="https://github.com/Bacon8tor/OpenClassBoard">Github</a></p>
           </div>
           </div>
