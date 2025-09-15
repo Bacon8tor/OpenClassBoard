@@ -10,15 +10,44 @@ import NamePickerWidget from "./components/widgets/NamePickerWidget";
 import ConversionWidget from "./components/widgets/ConversionWidget";
 
 import BottomBar from "./components/BottomBar";
+import VotingPage from "./components/VotingPage";
 
-export default function OpenClassScreen() {
+// Simple router component
+function SimpleRouter() {
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  console.log('🔍 Current path:', currentPath);
+
+  // Check if we're on a voting page
+  const voteMatch = currentPath.match(/^\/vote\/(.+)$/);
+  if (voteMatch) {
+    const pollId = voteMatch[1];
+    console.log('🗳️ Routing to voting page for poll:', pollId);
+    return <VotingPage pollId={pollId} />;
+  }
+
+  // Default to main classroom screen
+  console.log('🏫 Routing to main classroom screen');
+  return <OpenClassScreen />;
+}
+
+function OpenClassScreen() {
   const [bgUrl, setBgUrl] = useState("");
   const [bgColor, setBgColor] = useState("#800cb6ff");
   const [widgets, setWidgets] = useState([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [barMinimized, setBarMinimized] = useState(false);
   const [saveName, setSaveName] = useState("");
-  const [theme, setTheme] = useState("glass"); // widget theme
+  const [theme, setTheme] = useState("glass");
   const [customStyle, setCustomStyle] = useState({
     bgColor: "#ffffff",
     fontColor: "#000000"
@@ -52,15 +81,14 @@ export default function OpenClassScreen() {
   }, []);
 
   const addWidget = type => {
-    // Default sizes for different widget types
     const defaultSizes = {
-      stoplight: { width: 120, height: 280 },
+      stoplight: { width: 140, height: 280 },
       clock: { width: 200, height: 120 },
-      timer: { width: 180, height: 160 },
-      poll: { width: 250, height: 300 },
-      dice: { width: 200, height: 180 },
-      namepicker: { width: 220, height: 200 },
-      conversion: { width: 280, height: 180 }
+      timer: { width: 200, height: 180 },
+      poll: { width: 320, height: 380 },
+      dice: { width: 220, height: 200 },
+      namepicker: { width: 260, height: 240 },
+      conversion: { width: 300, height: 220 }
     };
 
     const size = defaultSizes[type] || { width: 200, height: 150 };
@@ -84,7 +112,6 @@ export default function OpenClassScreen() {
       prev.map(w => (w.id === id ? { ...w, title: newTitle } : w))
     );
 
-  // Saving/loading with position and size
   const saveNamedScreen = name => {
     if (!name) return alert("Provide a name!");
     const widgetsWithPos = widgets.map(w => {
@@ -96,10 +123,7 @@ export default function OpenClassScreen() {
     const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
     savedScreens[name] = data;
     localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
-    
-    // Also save as current layout
     localStorage.setItem("openClassBoard", JSON.stringify(data));
-    
     alert(`Screen saved as "${name}"`);
   };
 
@@ -110,8 +134,6 @@ export default function OpenClassScreen() {
     setWidgets(data.widgets || []);
     setBgUrl(data.bgUrl || "");
     setBgColor(data.bgColor || "#800cb6ff");
-    
-    // Also save as current layout
     localStorage.setItem("openClassBoard", JSON.stringify(data));
   };
 
@@ -142,7 +164,7 @@ export default function OpenClassScreen() {
       localStorage.setItem("openClassBoard", JSON.stringify(data));
     };
 
-    const timeoutId = setTimeout(saveCurrentLayout, 1000); // Auto-save after 1 second of no changes
+    const timeoutId = setTimeout(saveCurrentLayout, 1000);
     return () => clearTimeout(timeoutId);
   }, [widgets, bgUrl, bgColor]);
 
@@ -184,7 +206,6 @@ export default function OpenClassScreen() {
               zIndex: 9999 
             }}
           >
-            {/* Background */}
             <label>Background Color:</label>
             <input
               type="color"
@@ -208,7 +229,6 @@ export default function OpenClassScreen() {
               </button>
             )}
 
-            {/* Save/Load */}
             <input
               type="text"
               placeholder="Save name..."
@@ -304,3 +324,6 @@ export default function OpenClassScreen() {
     </div>
   );
 }
+
+// Export the router as the main component
+export default SimpleRouter;
