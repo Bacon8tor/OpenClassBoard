@@ -2,17 +2,35 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
-// Your Firebase config (get this from Firebase Console)
+// Firebase config from environment variables (Vite style)
 const firebaseConfig = {
-  apiKey: "AIzaSyBTp6AK5k1fJH8PVp7r7gjC0pPx5UR2is0",
-  authDomain: "openclassboard-4e9b2.firebaseapp.com",
-  databaseURL: "https://openclassboard-4e9b2-default-rtdb.firebaseio.com",
-  projectId: "openclassboard-4e9b2",
-  storageBucket: "openclassboard-4e9b2.firebasestorage.app",
-  messagingSenderId: "162660173154",
-  appId: "1:162660173154:web:68dd93a03fa9f32044983b",
-  measurementId: "G-NQVNYE5Z8J"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+// Validate required Firebase configuration
+const requiredConfig = {
+  'VITE_FIREBASE_API_KEY': firebaseConfig.apiKey,
+  'VITE_FIREBASE_AUTH_DOMAIN': firebaseConfig.authDomain,
+  'VITE_FIREBASE_DATABASE_URL': firebaseConfig.databaseURL,
+  'VITE_FIREBASE_PROJECT_ID': firebaseConfig.projectId,
+  'VITE_FIREBASE_STORAGE_BUCKET': firebaseConfig.storageBucket,
+  'VITE_FIREBASE_MESSAGING_SENDER_ID': firebaseConfig.messagingSenderId,
+  'VITE_FIREBASE_APP_ID': firebaseConfig.appId
+};
+
+const missingConfig = Object.entries(requiredConfig).filter(([key, value]) => !value);
+
+if (missingConfig.length > 0) {
+  console.error('Missing required Firebase environment variables:', missingConfig.map(([key]) => key));
+  console.error('Please copy .env.example to .env and fill in your Firebase configuration');
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
