@@ -8,6 +8,7 @@ import PollWidget from "./components/widgets/PollWidget";
 import DiceWidget from "./components/widgets/DiceWidget";
 import NamePickerWidget from "./components/widgets/NamePickerWidget";
 import ConversionWidget from "./components/widgets/ConversionWidget";
+import ImageWidget from "./components/widgets/ImageWidget";
 
 import BottomBar from "./components/BottomBar";
 import VotingPage from "./components/VotingPage";
@@ -88,7 +89,8 @@ function OpenClassScreen() {
       poll: { width: 320, height: 380 },
       dice: { width: 220, height: 200 },
       namepicker: { width: 260, height: 240 },
-      conversion: { width: 300, height: 220 }
+      conversion: { width: 300, height: 220 },
+      image: { width: 300, height: 200 }
     };
 
     const size = defaultSizes[type] || { width: 200, height: 150 };
@@ -116,8 +118,13 @@ function OpenClassScreen() {
     if (!name) return alert("Provide a name!");
     const widgetsWithPos = widgets.map(w => {
       const getPos = widgetRefs.current[w.id];
-      const pos = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
-      return { ...w, position: pos };
+      const posData = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
+
+      // Extract position and widget-specific data
+      const { colors, ...position } = posData;
+      const widgetData = colors ? { colors } : w.widgetData;
+
+      return { ...w, position, widgetData };
     });
     const data = { widgets: widgetsWithPos, bgUrl, bgColor };
     const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
@@ -157,8 +164,13 @@ function OpenClassScreen() {
     const saveCurrentLayout = () => {
       const widgetsWithPos = widgets.map(w => {
         const getPos = widgetRefs.current[w.id];
-        const pos = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
-        return { ...w, position: pos };
+        const posData = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
+
+        // Extract position and widget-specific data
+        const { colors, ...position } = posData;
+        const widgetData = colors ? { colors } : w.widgetData;
+
+        return { ...w, position, widgetData };
       });
       const data = { widgets: widgetsWithPos, bgUrl, bgColor };
       localStorage.setItem("openClassBoard", JSON.stringify(data));
@@ -291,7 +303,8 @@ function OpenClassScreen() {
           registerRef: getPos => (widgetRefs.current[w.id] = getPos),
           glassButtonStyle,
           theme,
-          customStyle
+          customStyle,
+          widgetData: w.widgetData
         };
 
         switch (w.type) {
@@ -309,6 +322,8 @@ function OpenClassScreen() {
             return <NamePickerWidget {...commonProps} />;
           case "conversion":
             return <ConversionWidget {...commonProps} />;
+          case "image":
+            return <ImageWidget {...commonProps} />;
           default:
             return null;
         }

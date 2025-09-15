@@ -3,14 +3,28 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function ClockWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
+export default function ClockWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetData }) {
   const [now, setNow] = useState(new Date());
+  const [showSettings, setShowSettings] = useState(false);
+  const [colors, setColors] = useState(
+    widgetData?.colors || {
+      timeColor: "#1a365d",
+      dateColor: "#4a5568",
+      weekdayColor: "#718096",
+      timezoneColor: "#a0aec0"
+    }
+  );
   const { ref, getPosition } = useDraggable(position || { x: 320, y: 80, width: 200, height: 120 });
   const { ref: contentRef, fontSize, spacing, isSmall, dimensions } = useWidgetDimensions();
 
-  useEffect(() => { 
-    if (registerRef) registerRef(getPosition); 
-  }, [getPosition, registerRef]);
+  useEffect(() => {
+    if (registerRef) {
+      registerRef(() => {
+        const pos = getPosition();
+        return { ...pos, colors };
+      });
+    }
+  }, [getPosition, registerRef, colors]);
   
   useEffect(() => { 
     const t = setInterval(() => setNow(new Date()), 1000); 
@@ -90,7 +104,25 @@ export default function ClockWidget({ onRemove, onRename, position, registerRef,
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Clock" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper
+        title="Clock"
+        onRemove={onRemove}
+        onRename={onRename}
+        glassButtonStyle={glassButtonStyle}
+        extraButton={
+          <button
+            style={{
+              ...glassButtonStyle,
+              fontSize: "12px",
+              padding: "4px 8px",
+              marginLeft: "4px"
+            }}
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            🎨
+          </button>
+        }
+      >
         <div 
           ref={contentRef}
           style={{ 
@@ -112,16 +144,11 @@ export default function ClockWidget({ onRemove, onRename, position, registerRef,
             fontWeight: timeSize > 25 ? "700" : "600",
             lineHeight: "0.95", // Tighter line height for more space
             whiteSpace: "nowrap",
-            color: timeSize > 30 ? "#1a365d" : "#2d3748",
+            color: colors.timeColor,
             textShadow: timeSize > 30 ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
-            background: timeSize > 40 ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" : "none",
-            backgroundClip: timeSize > 40 ? "text" : "initial",
-            WebkitBackgroundClip: timeSize > 40 ? "text" : "initial",
-            WebkitTextFillColor: timeSize > 40 ? "transparent" : "inherit",
-            padding: timeSize > 35 ? `${Math.max(2, timeSize * 0.04)}px ${Math.max(4, timeSize * 0.08)}px` : "0",
-            borderRadius: timeSize > 35 ? `${Math.max(4, timeSize * 0.06)}px` : "0",
-           // border: timeSize > 35 ? "2px solid rgba(102, 126, 234, 0.15)" : "none",
-            backgroundColor: timeSize > 35 ? "rgba(255,255,255,0.6)" : "transparent",
+            padding: "0",
+            borderRadius: "0",
+            backgroundColor: "transparent",
             transform: timeSize > 25 ? "scaleY(1.05)" : "none" // Slightly stretch for better space usage
           }}>
             {formatTime(now)}
@@ -130,7 +157,7 @@ export default function ClockWidget({ onRemove, onRename, position, registerRef,
           {/* Date Display - Compact but visible */}
           <div style={{ 
             fontSize: `${dateSize}px`, 
-            color: "#4a5568",
+            color: colors.dateColor,
             lineHeight: "0.9",
             whiteSpace: "nowrap",
             fontWeight: dateSize > 16 ? "500" : "400",
@@ -144,7 +171,7 @@ export default function ClockWidget({ onRemove, onRename, position, registerRef,
           {showWeekday && (
             <div style={{
               fontSize: `${Math.max(8, timeSize * 0.2)}px`,
-              color: "#718096",
+              color: colors.weekdayColor,
               fontWeight: "400",
               textAlign: "center",
               lineHeight: "1",
@@ -158,12 +185,95 @@ export default function ClockWidget({ onRemove, onRename, position, registerRef,
           {showTimezone && (
             <div style={{
               fontSize: `${Math.max(8, timeSize * 0.15)}px`,
-              color: "#a0aec0",
+              color: colors.timezoneColor,
               fontWeight: "300",
               textAlign: "center",
               lineHeight: "1"
             }}>
               {Intl.DateTimeFormat().resolvedOptions().timeZone.replace('_', ' ')}
+            </div>
+          )}
+
+          {/* Settings Panel */}
+          {showSettings && (
+            <div style={{
+              position: "absolute",
+              top: "40px",
+              right: "8px",
+              background: "rgba(255,255,255,0.95)",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              padding: "12px",
+              zIndex: 1000,
+              minWidth: "200px",
+              boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ fontWeight: "600", marginBottom: "8px", fontSize: "12px" }}>
+                Clock Colors
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <label style={{ fontSize: "11px", minWidth: "60px" }}>Time:</label>
+                  <input
+                    type="color"
+                    value={colors.timeColor}
+                    onChange={(e) => setColors(prev => ({ ...prev, timeColor: e.target.value }))}
+                    style={{ width: "30px", height: "20px" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <label style={{ fontSize: "11px", minWidth: "60px" }}>Date:</label>
+                  <input
+                    type="color"
+                    value={colors.dateColor}
+                    onChange={(e) => setColors(prev => ({ ...prev, dateColor: e.target.value }))}
+                    style={{ width: "30px", height: "20px" }}
+                  />
+                </div>
+
+                {showWeekday && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <label style={{ fontSize: "11px", minWidth: "60px" }}>Weekday:</label>
+                    <input
+                      type="color"
+                      value={colors.weekdayColor}
+                      onChange={(e) => setColors(prev => ({ ...prev, weekdayColor: e.target.value }))}
+                      style={{ width: "30px", height: "20px" }}
+                    />
+                  </div>
+                )}
+
+                {showTimezone && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <label style={{ fontSize: "11px", minWidth: "60px" }}>Timezone:</label>
+                    <input
+                      type="color"
+                      value={colors.timezoneColor}
+                      onChange={(e) => setColors(prev => ({ ...prev, timezoneColor: e.target.value }))}
+                      style={{ width: "30px", height: "20px" }}
+                    />
+                  </div>
+                )}
+
+                <button
+                  style={{
+                    ...glassButtonStyle,
+                    fontSize: "11px",
+                    padding: "4px 8px",
+                    marginTop: "4px"
+                  }}
+                  onClick={() => setColors({
+                    timeColor: "#1a365d",
+                    dateColor: "#4a5568",
+                    weekdayColor: "#718096",
+                    timezoneColor: "#a0aec0"
+                  })}
+                >
+                  Reset Colors
+                </button>
+              </div>
             </div>
           )}
         </div>

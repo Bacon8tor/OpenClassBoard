@@ -13,7 +13,8 @@ export default function BottomBar({
     "poll",
     "dice",
     "namepicker",
-    "conversion"
+    "conversion",
+    "image"
   ];
 
   return (

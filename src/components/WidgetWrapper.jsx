@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function WidgetWrapper({ title, children, onRemove, onRename, glassButtonStyle }) {
+export default function WidgetWrapper({ title, children, onRemove, onRename, glassButtonStyle, extraButton }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(title);
 
@@ -53,17 +53,20 @@ export default function WidgetWrapper({ title, children, onRemove, onRename, gla
             {name}
           </div>
         )}
-        <button 
-          onClick={onRemove} 
-          style={{
-            ...glassButtonStyle,
-            padding: "2px 6px",
-            fontSize: "12px",
-            flexShrink: 0
-          }}
-        >
-          ✕
-        </button>
+        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+          {extraButton}
+          <button
+            onClick={onRemove}
+            style={{
+              ...glassButtonStyle,
+              padding: "2px 6px",
+              fontSize: "12px",
+              flexShrink: 0
+            }}
+          >
+            ✕
+          </button>
+        </div>
       </div>
       <div style={{ 
         flex: 1, 
