@@ -51,30 +51,55 @@ export default function OpenClassScreen() {
     }
   }, []);
 
-  const addWidget = type =>
+  const addWidget = type => {
+    // Default sizes for different widget types
+    const defaultSizes = {
+      stoplight: { width: 120, height: 280 },
+      clock: { width: 200, height: 120 },
+      timer: { width: 180, height: 160 },
+      poll: { width: 250, height: 300 },
+      dice: { width: 200, height: 180 },
+      namepicker: { width: 220, height: 200 },
+      conversion: { width: 280, height: 180 }
+    };
+
+    const size = defaultSizes[type] || { width: 200, height: 150 };
+    
     setWidgets(prev => [
       ...prev,
-      { id: Date.now(), type, title: type.charAt(0).toUpperCase() + type.slice(1) }
+      { 
+        id: Date.now(), 
+        type, 
+        title: type.charAt(0).toUpperCase() + type.slice(1),
+        position: { x: 40, y: 40, ...size }
+      }
     ]);
+  };
+
   const removeWidget = id =>
     setWidgets(prev => prev.filter(w => w.id !== id));
+  
   const renameWidget = (id, newTitle) =>
     setWidgets(prev =>
       prev.map(w => (w.id === id ? { ...w, title: newTitle } : w))
     );
 
-  // Saving/loading
+  // Saving/loading with position and size
   const saveNamedScreen = name => {
     if (!name) return alert("Provide a name!");
     const widgetsWithPos = widgets.map(w => {
       const getPos = widgetRefs.current[w.id];
-      const pos = getPos ? getPos() : w.position || { x: 40, y: 40 };
+      const pos = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
       return { ...w, position: pos };
     });
     const data = { widgets: widgetsWithPos, bgUrl, bgColor };
     const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
     savedScreens[name] = data;
     localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
+    
+    // Also save as current layout
+    localStorage.setItem("openClassBoard", JSON.stringify(data));
+    
     alert(`Screen saved as "${name}"`);
   };
 
@@ -85,6 +110,9 @@ export default function OpenClassScreen() {
     setWidgets(data.widgets || []);
     setBgUrl(data.bgUrl || "");
     setBgColor(data.bgColor || "#800cb6ff");
+    
+    // Also save as current layout
+    localStorage.setItem("openClassBoard", JSON.stringify(data));
   };
 
   const deleteNamedScreen = name => {
@@ -101,6 +129,22 @@ export default function OpenClassScreen() {
     if (!file) return;
     setBgUrl(URL.createObjectURL(file));
   };
+
+  // Auto-save current layout when widgets change
+  useEffect(() => {
+    const saveCurrentLayout = () => {
+      const widgetsWithPos = widgets.map(w => {
+        const getPos = widgetRefs.current[w.id];
+        const pos = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
+        return { ...w, position: pos };
+      });
+      const data = { widgets: widgetsWithPos, bgUrl, bgColor };
+      localStorage.setItem("openClassBoard", JSON.stringify(data));
+    };
+
+    const timeoutId = setTimeout(saveCurrentLayout, 1000); // Auto-save after 1 second of no changes
+    return () => clearTimeout(timeoutId);
+  }, [widgets, bgUrl, bgColor]);
 
   return (
     <div style={{ height: "100vh", width: "100vw", position: "relative", overflow: "hidden" }}>
@@ -197,22 +241,22 @@ export default function OpenClassScreen() {
                 setWidgets([]);
                 setBgUrl("");
                 setBgColor("#800cb6ff");
-                localStorage.removeItem("classroomScreen");
+                localStorage.removeItem("openClassBoard");
               }}
             >
               Reset Layout
             </button>
             <br />
             <br />
-            <div style = {{ justifyContent: "center" }} >
+            <div style={{ justifyContent: "center" }}>
               <a href="https://www.buymeacoffee.com/bacon8tor">
-              <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
+                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
               </a>
             </div>
             <div style={{ fontSize: 12, color: "#555", textAlign: "center" }}>
               <p>OpenClassBoard was made and is maintained by a solo developer. If you find it useful, please consider supporting my work.
-              The Code is Opensource on  <a href="https://github.com/Bacon8tor/OpenClassBoard">Github</a></p>
-          </div>
+              The Code is Opensource on <a href="https://github.com/Bacon8tor/OpenClassBoard">Github</a></p>
+            </div>
           </div>
         )}
       </div>
