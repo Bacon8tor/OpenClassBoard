@@ -3,7 +3,7 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function Stoplight({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
+export default function Stoplight({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
   const [color, setColor] = useState("red");
   const { ref, getPosition } = useDraggable(position || { x: 80, y: 80, width: 140, height: 280 });
   const { ref: contentRef, fontSize, spacing, isSmall, isMedium, dimensions } = useWidgetDimensions();
@@ -57,7 +57,7 @@ export default function Stoplight({ onRemove, onRename, position, registerRef, g
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Stoplight" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Stoplight" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div 
           ref={contentRef}
           style={{ 

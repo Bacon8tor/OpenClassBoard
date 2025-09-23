@@ -3,7 +3,7 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function ConversionWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
+export default function ConversionWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
   const { ref, getPosition } = useDraggable(position || { x: 500, y: 250, width: 300, height: 220 });
   const { ref: contentRef, fontSize, spacing, isSmall, isMedium } = useWidgetDimensions();
   
@@ -112,7 +112,7 @@ export default function ConversionWidget({ onRemove, onRename, position, registe
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Conversion" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Conversion" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div 
           ref={contentRef}
           style={{ 

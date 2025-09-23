@@ -18,7 +18,6 @@ export default function useDraggable(initial = { x: 40, y: 40, width: 200, heigh
     let resizing = false;
     let start = { x: 0, y: 0 };
     let startSize = { width: 0, height: 0 };
-    let startPos = { x: 0, y: 0 };
 
     // Create single resize handle in bottom-right corner
     const resizeHandle = document.createElement('div');
@@ -52,7 +51,6 @@ export default function useDraggable(initial = { x: 40, y: 40, width: 200, heigh
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         start = { x: clientX, y: clientY };
         startSize = { width: posRef.current.width, height: posRef.current.height };
-        startPos = { x: posRef.current.x, y: posRef.current.y };
         
         e.preventDefault();
         e.stopPropagation();
@@ -80,8 +78,10 @@ export default function useDraggable(initial = { x: 40, y: 40, width: 200, heigh
         posRef.current.y += dy;
         
         // Keep widget within viewport bounds
+        // Account for bottom bar height (approximately 200px when expanded to be extra safe)
+        const bottomBarHeight = 200;
         posRef.current.x = Math.max(0, Math.min(window.innerWidth - posRef.current.width, posRef.current.x));
-        posRef.current.y = Math.max(0, Math.min(window.innerHeight - posRef.current.height - 100, posRef.current.y));
+        posRef.current.y = Math.max(0, Math.min(window.innerHeight - posRef.current.height - bottomBarHeight, posRef.current.y));
         
         el.style.transform = `translate(${posRef.current.x}px, ${posRef.current.y}px)`;
       } else if (resizing) {
@@ -92,8 +92,10 @@ export default function useDraggable(initial = { x: 40, y: 40, width: 200, heigh
         const newHeight = Math.max(100, startSize.height + dy);
         
         // Keep within viewport bounds
+        // Account for bottom bar height (approximately 200px when expanded to be extra safe)
+        const bottomBarHeight = 200;
         const maxWidth = window.innerWidth - posRef.current.x;
-        const maxHeight = window.innerHeight - posRef.current.y - 100;
+        const maxHeight = window.innerHeight - posRef.current.y - bottomBarHeight;
         
         posRef.current.width = Math.min(newWidth, maxWidth);
         posRef.current.height = Math.min(newHeight, maxHeight);

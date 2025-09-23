@@ -14,7 +14,9 @@ export default function BottomBar({
     "dice",
     "namepicker",
     "conversion",
-    "image"
+    "image",
+    "text",
+    "scoreboard"
   ];
 
   return (

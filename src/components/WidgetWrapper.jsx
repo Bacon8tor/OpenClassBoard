@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function WidgetWrapper({ title, children, onRemove, onRename, glassButtonStyle, extraButton }) {
+export default function WidgetWrapper({ title, children, onRemove, onRename, glassButtonStyle, extraButton, widgetTransparency = 80, hideTitles = false }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(title);
 
@@ -9,7 +9,7 @@ export default function WidgetWrapper({ title, children, onRemove, onRename, gla
       style={{
         padding: "12px",
         borderRadius: "8px",
-        background: "rgba(255,255,255,0.2)",
+        background: `rgba(255,255,255,${widgetTransparency / 100 * 0.2})`,
         position: "absolute",
         color: "black",
         width: "100%",
@@ -30,29 +30,32 @@ export default function WidgetWrapper({ title, children, onRemove, onRename, gla
           flexShrink: 0
         }}
       >
-        {editing ? (
-          <input
-            value={name}
-            onChange={e => setName(e.target.value)}
-            onBlur={() => { setEditing(false); onRename && onRename(name); }}
-            onKeyDown={e => { if (e.key === "Enter") { setEditing(false); onRename && onRename(name); } }}
-            autoFocus
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-              padding: "2px 4px",
-              fontSize: "12px",
-              flex: 1
-            }}
-          />
-        ) : (
-          <div
-            style={{ fontWeight: 600, cursor: "pointer", flex: 1, fontSize: "12px" }}
-            onClick={() => setEditing(true)}
-          >
-            {name}
-          </div>
+        {!hideTitles && (
+          editing ? (
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onBlur={() => { setEditing(false); onRename && onRename(name); }}
+              onKeyDown={e => { if (e.key === "Enter") { setEditing(false); onRename && onRename(name); } }}
+              autoFocus
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                padding: "2px 4px",
+                fontSize: "12px",
+                flex: 1
+              }}
+            />
+          ) : (
+            <div
+              style={{ fontWeight: 600, cursor: "pointer", flex: 1, fontSize: "12px" }}
+              onClick={() => setEditing(true)}
+            >
+              {name}
+            </div>
+          )
         )}
+        {hideTitles && <div style={{ flex: 1 }} />}
         <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           {extraButton}
           <button

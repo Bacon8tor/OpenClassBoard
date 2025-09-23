@@ -5,8 +5,8 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function PollWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
-  const { ref: widgetRef, getPosition } = useDraggable(position || { x: 200, y: 260, width: 320, height: 380 });
+export default function PollWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
+  const { ref: widgetRef, getPosition } = useDraggable(position || { x: 200, y: 260, width: 320, height: 480 });
   const { ref: contentRef, fontSize, spacing, isSmall, isMedium, dimensions } = useWidgetDimensions();
   
   const cleanupOldPolls = async () => {
@@ -298,7 +298,7 @@ useEffect(() => {
 
   return (
     <div ref={widgetRef}>
-      <WidgetWrapper title="Poll" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Poll" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div 
           ref={contentRef}
           style={{ 

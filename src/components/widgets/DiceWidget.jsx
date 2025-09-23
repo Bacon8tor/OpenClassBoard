@@ -3,8 +3,8 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function DiceWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
-  const { ref, getPosition } = useDraggable(position || { x: 400, y: 200, width: 220, height: 200 });
+export default function DiceWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
+  const { ref, getPosition } = useDraggable(position || { x: 400, y: 200, width: 220, height: 250 });
   const { ref: contentRef, fontSize, spacing, isSmall, isMedium, dimensions } = useWidgetDimensions();
   
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function DiceWidget({ onRemove, onRename, position, registerRef, 
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Dice" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Dice" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div 
           ref={contentRef}
           style={{ 

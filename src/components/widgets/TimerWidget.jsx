@@ -3,7 +3,7 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function TimerWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
+export default function TimerWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
   const [running, setRunning] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(5 * 60);
   const { ref, getPosition } = useDraggable(position || { x: 80, y: 260, width: 200, height: 180 });
@@ -57,7 +57,7 @@ export default function TimerWidget({ onRemove, onRename, position, registerRef,
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Timer" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Timer" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div 
           ref={contentRef}
           style={{ 

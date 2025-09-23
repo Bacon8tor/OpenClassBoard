@@ -3,11 +3,11 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function ImageWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
+export default function ImageWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
-  const { ref, getPosition } = useDraggable(position || { x: 40, y: 40, width: 300, height: 200 });
+  const { ref, getPosition } = useDraggable(position || { x: 40, y: 40, width: 300, height: 250 });
   const { ref: contentRef, dimensions } = useWidgetDimensions();
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function ImageWidget({ onRemove, onRename, position, registerRef,
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Image" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Image" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div
           ref={contentRef}
           style={{

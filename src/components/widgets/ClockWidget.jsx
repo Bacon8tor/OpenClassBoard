@@ -3,7 +3,7 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function ClockWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetData }) {
+export default function ClockWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetData, widgetTransparency, hideTitles }) {
   const [now, setNow] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
   const [colors, setColors] = useState(
@@ -109,6 +109,8 @@ export default function ClockWidget({ onRemove, onRename, position, registerRef,
         onRemove={onRemove}
         onRename={onRename}
         glassButtonStyle={glassButtonStyle}
+        widgetTransparency={widgetTransparency}
+        hideTitles={hideTitles}
         extraButton={
           <button
             style={{

@@ -3,8 +3,8 @@ import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
-export default function NamePickerWidget({ onRemove, onRename, position, registerRef, glassButtonStyle }) {
-  const { ref, getPosition } = useDraggable(position || { x: 400, y: 300, width: 260, height: 240 });
+export default function NamePickerWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
+  const { ref, getPosition } = useDraggable(position || { x: 400, y: 300, width: 260, height: 290 });
   const { ref: contentRef, fontSize, spacing, isSmall, isMedium } = useWidgetDimensions();
   
   useEffect(() => { if (registerRef) registerRef(getPosition); }, [getPosition, registerRef]);
@@ -91,7 +91,7 @@ export default function NamePickerWidget({ onRemove, onRename, position, registe
 
   return (
     <div ref={ref}>
-      <WidgetWrapper title="Name Picker" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle}>
+      <WidgetWrapper title="Name Picker" onRemove={onRemove} onRename={onRename} glassButtonStyle={glassButtonStyle} widgetTransparency={widgetTransparency} hideTitles={hideTitles}>
         <div 
           ref={contentRef}
           style={{ 

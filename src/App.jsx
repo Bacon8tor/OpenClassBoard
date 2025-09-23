@@ -9,6 +9,8 @@ import DiceWidget from "./components/widgets/DiceWidget";
 import NamePickerWidget from "./components/widgets/NamePickerWidget";
 import ConversionWidget from "./components/widgets/ConversionWidget";
 import ImageWidget from "./components/widgets/ImageWidget";
+import TextWidget from "./components/widgets/TextWidget";
+import ScoreboardWidget from "./components/widgets/ScoreboardWidget";
 
 import BottomBar from "./components/BottomBar";
 import VotingPage from "./components/VotingPage";
@@ -53,6 +55,8 @@ function OpenClassScreen() {
     bgColor: "#ffffff",
     fontColor: "#000000"
   });
+  const [widgetTransparency, setWidgetTransparency] = useState(80);
+  const [hideTitles, setHideTitles] = useState(false);
 
   const widgetRefs = useRef({});
 
@@ -78,6 +82,8 @@ function OpenClassScreen() {
       setWidgets(data.widgets || []);
       setBgUrl(data.bgUrl || "");
       setBgColor(data.bgColor || "#800cb6ff");
+      setWidgetTransparency(data.widgetTransparency ?? 80);
+      setHideTitles(data.hideTitles ?? false);
     }
   }, []);
 
@@ -86,22 +92,30 @@ function OpenClassScreen() {
       stoplight: { width: 140, height: 280 },
       clock: { width: 200, height: 120 },
       timer: { width: 200, height: 180 },
-      poll: { width: 320, height: 380 },
-      dice: { width: 220, height: 200 },
-      namepicker: { width: 260, height: 240 },
+      poll: { width: 320, height: 480 },
+      dice: { width: 220, height: 250 },
+      namepicker: { width: 260, height: 290 },
       conversion: { width: 300, height: 220 },
-      image: { width: 300, height: 200 }
+      image: { width: 300, height: 250 },
+      text: { width: 350, height: 300 },
+      scoreboard: { width: 400, height: 320 }
     };
 
     const size = defaultSizes[type] || { width: 200, height: 150 };
-    
+
+    // Calculate safe position to ensure widget is fully visible
+    // Account for bottom bar height (approximately 200px when expanded to be extra safe)
+    const bottomBarHeight = 200;
+    const maxY = window.innerHeight - size.height - bottomBarHeight;
+    const safeY = maxY >= 40 ? 40 : Math.max(10, maxY);
+
     setWidgets(prev => [
       ...prev,
-      { 
-        id: Date.now(), 
-        type, 
+      {
+        id: Date.now(),
+        type,
         title: type.charAt(0).toUpperCase() + type.slice(1),
-        position: { x: 40, y: 40, ...size }
+        position: { x: 40, y: safeY, ...size }
       }
     ]);
   };
@@ -126,7 +140,7 @@ function OpenClassScreen() {
 
       return { ...w, position, widgetData };
     });
-    const data = { widgets: widgetsWithPos, bgUrl, bgColor };
+    const data = { widgets: widgetsWithPos, bgUrl, bgColor, widgetTransparency, hideTitles };
     const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
     savedScreens[name] = data;
     localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
@@ -141,6 +155,8 @@ function OpenClassScreen() {
     setWidgets(data.widgets || []);
     setBgUrl(data.bgUrl || "");
     setBgColor(data.bgColor || "#800cb6ff");
+    setWidgetTransparency(data.widgetTransparency ?? 80);
+    setHideTitles(data.hideTitles ?? false);
     localStorage.setItem("openClassBoard", JSON.stringify(data));
   };
 
@@ -172,7 +188,7 @@ function OpenClassScreen() {
 
         return { ...w, position, widgetData };
       });
-      const data = { widgets: widgetsWithPos, bgUrl, bgColor };
+      const data = { widgets: widgetsWithPos, bgUrl, bgColor, widgetTransparency, hideTitles };
       localStorage.setItem("openClassBoard", JSON.stringify(data));
     };
 
@@ -241,6 +257,29 @@ function OpenClassScreen() {
               </button>
             )}
 
+            <label>Widget Transparency:</label>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              value={widgetTransparency}
+              onChange={e => setWidgetTransparency(parseInt(e.target.value))}
+              style={{ width: "100%", marginBottom: 6 }}
+            />
+            <div style={{ fontSize: "12px", color: "#666", marginBottom: 6 }}>
+              {widgetTransparency}% opacity
+            </div>
+
+            <label style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+              <input
+                type="checkbox"
+                checked={hideTitles}
+                onChange={e => setHideTitles(e.target.checked)}
+                style={{ marginRight: 6 }}
+              />
+              Hide Widget Titles
+            </label>
+
             <input
               type="text"
               placeholder="Save name..."
@@ -304,7 +343,9 @@ function OpenClassScreen() {
           glassButtonStyle,
           theme,
           customStyle,
-          widgetData: w.widgetData
+          widgetData: w.widgetData,
+          widgetTransparency,
+          hideTitles
         };
 
         switch (w.type) {
@@ -324,6 +365,10 @@ function OpenClassScreen() {
             return <ConversionWidget {...commonProps} />;
           case "image":
             return <ImageWidget {...commonProps} />;
+          case "text":
+            return <TextWidget {...commonProps} />;
+          case "scoreboard":
+            return <ScoreboardWidget {...commonProps} />;
           default:
             return null;
         }
