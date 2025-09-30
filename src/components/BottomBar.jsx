@@ -1,16 +1,19 @@
 import React from "react";
 
-export default function BottomBar({ 
-  barMinimized, 
-  setBarMinimized, 
-  glassButtonStyle, 
-  addWidget 
+export default function BottomBar({
+  barMinimized,
+  setBarMinimized,
+  glassButtonStyle,
+  addWidget
 }) {
+  // Check if poll widget should be available
+  const POLL_ENABLED = import.meta.env.VITE_DISABLE_POLL !== 'true';
+
   const widgetTypes = [
     "stoplight",
     "clock",
     "timer",
-    "poll",
+    ...(POLL_ENABLED ? ["poll"] : []),  // Only include poll if enabled
     "dice",
     "namepicker",
     "conversion",

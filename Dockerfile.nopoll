@@ -14,6 +14,12 @@ RUN npm install
 
 COPY . .
 
+# Build with VITE_DISABLE_POLL flag
+ENV VITE_DISABLE_POLL=true
+
+# Build the app
+RUN npm run build
+
 EXPOSE 5173
 
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]

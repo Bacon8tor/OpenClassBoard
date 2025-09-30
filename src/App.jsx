@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Stoplight from "./components/widgets/Stoplight";
 import ClockWidget from "./components/widgets/ClockWidget";
 import TimerWidget from "./components/widgets/TimerWidget";
-import PollWidget from "./components/widgets/PollWidget";
 import DiceWidget from "./components/widgets/DiceWidget";
 import NamePickerWidget from "./components/widgets/NamePickerWidget";
 import ConversionWidget from "./components/widgets/ConversionWidget";
@@ -13,7 +12,21 @@ import TextWidget from "./components/widgets/TextWidget";
 import ScoreboardWidget from "./components/widgets/ScoreboardWidget";
 
 import BottomBar from "./components/BottomBar";
-import VotingPage from "./components/VotingPage";
+
+// Conditionally import Poll-related components based on build flag
+const POLL_ENABLED = import.meta.env.VITE_DISABLE_POLL !== 'true';
+
+// Conditional imports for poll functionality
+let PollWidget = null;
+let VotingPage = null;
+
+if (POLL_ENABLED) {
+  // These will only be imported if POLL_ENABLED is true
+  const PollWidgetModule = await import("./components/widgets/PollWidget");
+  const VotingPageModule = await import("./components/VotingPage");
+  PollWidget = PollWidgetModule.default;
+  VotingPage = VotingPageModule.default;
+}
 
 // Simple router component
 function SimpleRouter() {
@@ -35,6 +48,32 @@ function SimpleRouter() {
   if (voteMatch) {
     const pollId = voteMatch[1];
     console.log('🗳️ Routing to voting page for poll:', pollId);
+
+    if (!POLL_ENABLED || !VotingPage) {
+      return (
+        <div style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          padding: "20px"
+        }}>
+          <div style={{
+            background: "white",
+            padding: "32px",
+            borderRadius: "16px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+            textAlign: "center"
+          }}>
+            <h2>Polling Not Available</h2>
+            <p>This version of OpenClassBoard does not include polling functionality.</p>
+          </div>
+        </div>
+      );
+    }
+
     return <VotingPage pollId={pollId} />;
   }
 
@@ -358,7 +397,7 @@ function OpenClassScreen() {
           case "timer":
             return <TimerWidget {...commonProps} />;
           case "poll":
-            return <PollWidget {...commonProps} />;
+            return POLL_ENABLED && PollWidget ? <PollWidget {...commonProps} /> : null;
           case "dice":
             return <DiceWidget {...commonProps} />;
           case "namepicker":

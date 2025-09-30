@@ -2,9 +2,16 @@
 
 OpenClassBoard is a dynamic, interactive classroom display application built with React. Create a customizable digital classroom board with draggable and resizable widgets including clocks, polls, dice, timers, scoreboards, and more.
 
+## 📦 Available Tags
+
+- **`latest`** - Full version with polling functionality (requires Firebase)
+- **`nopoll`** - Lightweight version without polling (no Firebase required)
+
 ## 🚀 Quick Start
 
-### Using Docker Run
+### Option 1: Full Version with Polling (latest)
+
+Requires Firebase configuration for polling features:
 
 ```bash
 docker run -d \
@@ -20,12 +27,21 @@ docker run -d \
   bacon8t0r/openclassboard:latest
 ```
 
+### Option 2: No-Poll Version (nopoll)
+
+Simplified version without polling features, no Firebase setup needed:
+
+```bash
+docker run -d \
+  -p 5173:5173 \
+  bacon8t0r/openclassboard:nopoll
+```
+
 Then open http://localhost:5173 in your browser.
 
 ### Using Docker Compose
 
-Create a `docker-compose.yml` file:
-
+#### Full Version (docker-compose.yml)
 ```yaml
 version: '3.8'
 
@@ -48,9 +64,24 @@ services:
     restart: unless-stopped
 ```
 
+#### No-Poll Version (docker-compose.nopoll.yml)
+```yaml
+version: '3.8'
+
+services:
+  openclassboard:
+    image: bacon8t0r/openclassboard:nopoll
+    container_name: openclassboard-nopoll
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+```
+
 Then run:
 ```bash
 docker-compose up -d
+# OR for nopoll version:
+docker-compose -f docker-compose.nopoll.yml up -d
 ```
 
 ## 🔥 Firebase Setup
@@ -115,14 +146,17 @@ For production, update your Realtime Database rules:
 
 ## ✨ Features
 
-- **🎛️ Customizable Widgets**: Clock, Timer, Poll, Dice, Name Picker, Stoplight, Scoreboard, Text Editor, Image Display, Unit Converter
-- **📊 Interactive Polls**: Real-time voting with QR code support
+### Core Features (All Versions)
+- **🎛️ Customizable Widgets**: Clock, Timer, Dice, Name Picker, Stoplight, Scoreboard, Text Editor, Image Display, Unit Converter
 - **🏆 Scoreboard**: Track team scores with customizable colors and names
 - **📝 Rich Text Editor**: Create formatted text with lists and styling
 - **⚙️ Widget Appearance**: Adjust transparency and hide titles
 - **💾 Layout Management**: Save and load different classroom layouts
 - **🎨 Customizable Styling**: Personalize widget colors and backgrounds
 - **📱 Responsive Design**: Works on tablets, laptops, and interactive whiteboards
+
+### Additional Features (`:latest` tag only)
+- **📊 Interactive Polls**: Real-time voting with QR code support (requires Firebase)
 
 ## 🛠️ Usage
 
@@ -177,14 +211,20 @@ OpenClassBoard stores all data in browser localStorage. No volumes are required.
 
 Pull the latest version:
 ```bash
+# For full version
 docker pull bacon8t0r/openclassboard:latest
+
+# For nopoll version
+docker pull bacon8t0r/openclassboard:nopoll
+
+# Then restart
 docker-compose down
 docker-compose up -d
 ```
 
 ## 💡 Tips
 
-- **Without Firebase**: The app works without Firebase, but polling features will be disabled
+- **Choosing a Version**: Use `:nopoll` tag if you don't need polling features or want to avoid Firebase setup
 - **Mobile Access**: Use your computer's IP address to access from tablets/phones on the same network
 - **Persistent Storage**: Layouts are saved in browser localStorage, so use the same browser to maintain your setups
 - **Performance**: For best performance, use a modern browser (Chrome, Firefox, Edge)
