@@ -8,7 +8,22 @@ export default function VotingPage({ pollId }) {
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [voterId] = useState(() => `voter_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+
+  // Generate or retrieve persistent voter ID from localStorage
+  const [voterId] = useState(() => {
+    const storageKey = `voter_${pollId}`;
+    const existingVoterId = localStorage.getItem(storageKey);
+
+    if (existingVoterId) {
+      console.log('📱 Using existing voter ID from localStorage:', existingVoterId);
+      return existingVoterId;
+    }
+
+    const newVoterId = `voter_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    localStorage.setItem(storageKey, newVoterId);
+    console.log('🆕 Created new voter ID:', newVoterId);
+    return newVoterId;
+  });
 
   // Debug: Log important info
   useEffect(() => {
@@ -20,24 +35,34 @@ export default function VotingPage({ pollId }) {
   useEffect(() => {
     const pollRef = ref(database, `polls/${pollId}`);
     console.log('📡 Setting up Firebase listener for poll:', pollId);
-    
+
+    // Check localStorage first for local vote tracking
+    const hasVotedLocally = localStorage.getItem(`voted_${pollId}`) === 'true';
+    if (hasVotedLocally) {
+      console.log('🔒 User has already voted (localStorage check)');
+    }
+
     // Listen for real-time updates
     const unsubscribe = onValue(pollRef, (snapshot) => {
       console.log('📥 Received Firebase data:', snapshot.val());
       const data = snapshot.val();
-      
+
       if (data) {
         setPollData(data);
-        
-        // Check if this voter already voted
+
+        // Check if this voter already voted (Firebase OR localStorage)
         const voters = data.voters || {};
-        const alreadyVoted = !!voters[voterId];
+        const alreadyVotedFirebase = !!voters[voterId];
+        const alreadyVoted = alreadyVotedFirebase || hasVotedLocally;
+
         setHasVoted(alreadyVoted);
         setSelectedOption(voters[voterId] || null);
         setError(null);
-        
+
         console.log('✅ Poll data loaded successfully');
-        console.log('🗳️ Has already voted:', alreadyVoted);
+        console.log('🗳️ Has already voted (Firebase):', alreadyVotedFirebase);
+        console.log('🗳️ Has already voted (localStorage):', hasVotedLocally);
+        console.log('🗳️ Final hasVoted status:', alreadyVoted);
       } else {
         console.log('❌ No poll data found');
         setPollData(null);
@@ -105,7 +130,10 @@ export default function VotingPage({ pollId }) {
 
       console.log('✅ Vote submitted successfully!');
       setHasVoted(true);
-      
+
+      // Mark as voted in localStorage to prevent refresh-based revoting
+      localStorage.setItem(`voted_${pollId}`, 'true');
+
     } catch (error) {
       console.error('❌ Vote submission failed:', error);
       setError(`Failed to submit vote: ${error.message}`);

@@ -1,0 +1,66 @@
+{
+  "rules": {
+    "polls": {
+      "$pollId": {
+        // Anyone can read poll data
+        ".read": true,
+
+        // Poll structure validation
+        "title": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+        },
+
+        "options": {
+          ".validate": "newData.hasChildren()",
+          "$option": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+          }
+        },
+
+        "votes": {
+          ".validate": "newData.hasChildren()",
+          "$option": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+          }
+        },
+
+        "voters": {
+          ".validate": "newData.hasChildren()",
+          "$voterId": {
+            ".validate": "newData.isString() && newData.val().length <= 100",
+            ".write": "!data.exists() || newData.val() == data.val()"
+          }
+        },
+
+        "created": {
+          ".validate": "newData.isNumber() && newData.val() <= now && newData.val() >= (now - 86400000)"
+        },
+
+        "isLive": {
+          ".validate": "newData.isBoolean()"
+        },
+
+        // Write access rules
+        ".write": "
+          // Allow creating new polls
+          (!data.exists()) ||
+
+          // Allow updates to existing live polls
+          (data.exists() && data.child('isLive').val() === true) ||
+
+          // Allow ending a poll (setting isLive to false)
+          (data.exists() && newData.child('isLive').val() === false)
+        ",
+
+        // Index for performance
+        ".indexOn": ["isLive", "created"]
+      }
+    },
+
+    // Block all other paths
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

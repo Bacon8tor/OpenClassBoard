@@ -1,0 +1,57 @@
+{
+  "rules": {
+    "polls": {
+      "$pollId": {
+        // Anyone can read poll data (required for voting page)
+        ".read": true,
+
+        // Allow writing if poll doesn't exist (creating new poll) or if poll exists (updating)
+        ".write": true,
+
+        // Title validation
+        "title": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+        },
+
+        // Options validation
+        "options": {
+          ".validate": "newData.hasChildren()",
+          "$option": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+          }
+        },
+
+        // Votes validation
+        "votes": {
+          "$option": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+          }
+        },
+
+        // Voters tracking - prevent changing once set
+        "voters": {
+          "$voterId": {
+            ".validate": "newData.isString() && newData.val().length <= 100",
+            ".write": "!data.exists() || newData.val() == data.val()"
+          }
+        },
+
+        // Created timestamp validation
+        "created": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
+        },
+
+        // Live status validation
+        "isLive": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+
+    // Block all other paths
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

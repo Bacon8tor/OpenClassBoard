@@ -138,7 +138,11 @@ useEffect(() => {
     }
 
     const pollRef = ref(database, `polls/${pollId}`);
-    
+
+    // Get current data from Firebase to preserve voters
+    const snapshot = await get(pollRef);
+    const currentData = snapshot.exists() ? snapshot.val() : {};
+
     // Ensure votes object has all options initialized
     const currentVotes = votes;
     const allOptions = updates.options || options;
@@ -151,8 +155,8 @@ useEffect(() => {
       title: pollTitle,
       options: allOptions,
       votes: updates.votes || properVotes,
-      voters: {},
-      created: Date.now(),
+      voters: currentData.voters || {}, // Preserve existing voters
+      created: currentData.created || Date.now(), // Preserve original creation time
       isLive: true,
       ...updates
     };
