@@ -104,8 +104,8 @@ function OpenClassScreen() {
     const size = defaultSizes[type] || { width: 200, height: 150 };
 
     // Calculate safe position to ensure widget is fully visible
-    // Account for bottom bar height (approximately 200px when expanded to be extra safe)
-    const bottomBarHeight = 200;
+    // Account for bottom bar height (approximately 40px when expanded)
+    const bottomBarHeight = 40;
     const maxY = window.innerHeight - size.height - bottomBarHeight;
     const safeY = maxY >= 40 ? 40 : Math.max(10, maxY);
 

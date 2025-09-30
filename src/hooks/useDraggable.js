@@ -78,8 +78,8 @@ export default function useDraggable(initial = { x: 40, y: 40, width: 200, heigh
         posRef.current.y += dy;
         
         // Keep widget within viewport bounds
-        // Account for bottom bar height (approximately 200px when expanded to be extra safe)
-        const bottomBarHeight = 200;
+        // Account for bottom bar height (approximately 40px when expanded)
+        const bottomBarHeight = 40;
         posRef.current.x = Math.max(0, Math.min(window.innerWidth - posRef.current.width, posRef.current.x));
         posRef.current.y = Math.max(0, Math.min(window.innerHeight - posRef.current.height - bottomBarHeight, posRef.current.y));
         
@@ -92,8 +92,8 @@ export default function useDraggable(initial = { x: 40, y: 40, width: 200, heigh
         const newHeight = Math.max(100, startSize.height + dy);
         
         // Keep within viewport bounds
-        // Account for bottom bar height (approximately 200px when expanded to be extra safe)
-        const bottomBarHeight = 200;
+        // Account for bottom bar height (approximately 40px when expanded)
+        const bottomBarHeight = 40;
         const maxWidth = window.innerWidth - posRef.current.x;
         const maxHeight = window.innerHeight - posRef.current.y - bottomBarHeight;
         
