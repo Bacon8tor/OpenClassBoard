@@ -1,4 +1,10 @@
-FROM node:20-alpine
+FROM node:22-alpine
+
+# Update Alpine packages to fix BusyBox vulnerabilities
+RUN apk update && apk upgrade --no-cache
+
+# Update npm to latest version to fix security vulnerabilities
+RUN npm install -g npm@latest
 
 WORKDIR /app
 
