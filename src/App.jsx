@@ -358,16 +358,40 @@ function OpenClassScreen() {
             </button>
             <br />
             <br />
-            <div style={{ justifyContent: "center" }}>
-              <a href="https://www.buymeacoffee.com/bacon8tor">
-                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
-              </a>
-            </div>
+            
             <div style={{ fontSize: 12, color: "#555", textAlign: "center" }}>
               <p>OpenClassBoard was made and is maintained by a solo developer. 
                 If you find it useful, please consider supporting my work so that I can continue hosting the site.
-              The Code is Opensource on <a href="https://github.com/Bacon8tor/OpenClassBoard">Github</a>.
-              It is also available as a Docker Container on <a href = "">Docker Hub</a></p>
+              </p>
+            </div>
+            <div style={{ justifyContent: "center" }}>
+              <a href="https://www.buymeacoffee.com/bacon8tor" target="_blank">
+                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
+              </a>
+            </div>
+            <div style={{ justifyContent: "center" }}>
+              <a href="https://github.com/Bacon8tor/OpenClassBoard" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://img.shields.io/badge/GitHub-Repo-black?style=for-the-badge&logo=github" 
+                  alt="GitHub Repo" 
+                />
+              </a>
+            </div>
+            <div style={{ justifyContent: "center" }}>
+              <a href="https://hub.docker.com/r/bacon8t0r/openclassboard" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://img.shields.io/badge/DockerHub-View_Image-blue?style=for-the-badge&logo=docker&logoColor=white" 
+                  alt="Docker Hub" 
+                />
+              </a>
+            </div>
+            <div style={{ justifyContent: "center" }}>
+              <a href="https://discord.gg/KDfRFZ9YFe" target="_blank" rel="noopener noreferrer">
+                <img 
+                  src="https://img.shields.io/badge/Discord-Join_Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" 
+                  alt="Join Discord" 
+                />
+              </a>
             </div>
           </div>
         )}
