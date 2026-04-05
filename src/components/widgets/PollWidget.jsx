@@ -1,46 +1,48 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { ref, set, onValue, get, remove } from 'firebase/database';
 import { database } from '../../firebase';
 import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
 
+const log = (...args) => { if (import.meta.env.DEV) console.log(...args); };
+
 export default function PollWidget({ onRemove, onRename, position, registerRef, glassButtonStyle, widgetTransparency, hideTitles }) {
   const { ref: widgetRef, getPosition } = useDraggable(position || { x: 200, y: 260, width: 320, height: 480 });
-  const { ref: contentRef, fontSize, spacing, isSmall, isMedium, dimensions } = useWidgetDimensions();
-  
-  const cleanupOldPolls = async () => {
+  const { ref: contentRef, fontSize, spacing, isSmall, dimensions } = useWidgetDimensions();
+
+  const cleanupOldPolls = useCallback(async (currentPollId) => {
   try {
-    console.log('🧹 Cleaning up old polls...');
+    log('🧹 Cleaning up old polls...');
     const pollsRef = ref(database, 'polls');
     const snapshot = await get(pollsRef);
-    
+
     if (snapshot.exists()) {
       const polls = snapshot.val();
-      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
       let deletedCount = 0;
-      
-      for (const [pollId, pollData] of Object.entries(polls)) {
+
+      for (const [id, pollData] of Object.entries(polls)) {
         // Skip current poll
-        if (pollId === pollId) continue;
-        
+        if (id === currentPollId) continue;
+
         if (pollData.created && pollData.created < oneDayAgo) {
-          await remove(ref(database, `polls/${pollId}`));
+          await remove(ref(database, `polls/${id}`));
           deletedCount++;
-          console.log(`🗑️ Deleted old poll: ${pollId}`);
+          log(`🗑️ Deleted old poll: ${id}`);
         }
       }
-      
+
       if (deletedCount > 0) {
-        console.log(`✅ Cleanup complete: ${deletedCount} old polls deleted`);
+        log(`✅ Cleanup complete: ${deletedCount} old polls deleted`);
       } else {
-        console.log('✅ No old polls to delete');
+        log('✅ No old polls to delete');
       }
     }
   } catch (error) {
-    console.error('❌ Cleanup error:', error);
+    if (import.meta.env.DEV) console.error('❌ Cleanup error:', error);
   }
-};
+}, []);
 
 
   useEffect(() => { if (registerRef) registerRef(getPosition); }, [getPosition, registerRef]);
@@ -56,25 +58,23 @@ export default function PollWidget({ onRemove, onRename, position, registerRef, 
   const [isLive, setIsLive] = useState(false);
   const [firebaseError, setFirebaseError] = useState(null);
 
-  // Debug: Log the poll ID when component mounts
   useEffect(() => {
-    console.log('🎯 Poll Widget created with ID:', pollId);
+    log('🎯 Poll Widget created with ID:', pollId);
   }, [pollId]);
 
   // Firebase real-time sync
   useEffect(() => {
     if (!isLive) {
-      console.log('📴 Poll is offline, skipping Firebase sync');
+      log('📴 Poll is offline, skipping Firebase sync');
       return;
     }
 
-
-    console.log('🔄 Setting up Firebase sync for poll:', pollId);
+    log('🔄 Setting up Firebase sync for poll:', pollId);
     const pollRef = ref(database, `polls/${pollId}`);
-    
+
     // Listen for changes
     const unsubscribe = onValue(pollRef, (snapshot) => {
-      console.log('📡 Received Firebase update:', snapshot.val());
+      log('📡 Received Firebase update:', snapshot.val());
       const data = snapshot.val();
       if (data) {
         setOptions(data.options || []);
@@ -83,7 +83,7 @@ export default function PollWidget({ onRemove, onRename, position, registerRef, 
         setFirebaseError(null);
       }
     }, (error) => {
-      console.error('❌ Firebase read error:', error);
+      if (import.meta.env.DEV) console.error('❌ Firebase read error:', error);
       setFirebaseError(error.message);
     });
 
@@ -102,38 +102,35 @@ export default function PollWidget({ onRemove, onRename, position, registerRef, 
       isLive: true
     };
 
-    console.log('💾 Saving initial poll data to Firebase:', initialData);
-    
+    log('💾 Saving initial poll data to Firebase:', initialData);
+
     set(pollRef, initialData)
       .then(() => {
-        console.log('✅ Successfully saved poll to Firebase!');
+        log('✅ Successfully saved poll to Firebase!');
         setFirebaseError(null);
       })
       .catch((error) => {
-        console.error('❌ Firebase write error:', error);
+        if (import.meta.env.DEV) console.error('❌ Firebase write error:', error);
         setFirebaseError(error.message);
       });
 
     return () => {
-      console.log('🔌 Disconnecting Firebase listener');
-      // Set poll as offline when component unmounts or goes offline
-      set(ref(database, `polls/${pollId}/isLive`), false).catch(console.error);
+      log('🔌 Disconnecting Firebase listener');
+      set(ref(database, `polls/${pollId}/isLive`), false).catch(
+        (e) => { if (import.meta.env.DEV) console.error(e); }
+      );
       unsubscribe();
     };
   }, [isLive, pollId]);
 useEffect(() => {
-  // Run cleanup when poll widget loads
-  cleanupOldPolls();
-  
-  // Optional: Run cleanup every 2 hours
-  const cleanupInterval = setInterval(cleanupOldPolls, 2 * 60 * 60 * 1000);
-  
+  cleanupOldPolls(pollId);
+  const cleanupInterval = setInterval(() => cleanupOldPolls(pollId), 2 * 60 * 60 * 1000);
   return () => clearInterval(cleanupInterval);
-}, []); // Empty dependency array means this runs once when component mounts
+}, [pollId, cleanupOldPolls]);
   // Update Firebase when local state changes (teacher actions)
   const updateFirebase = async (updates) => {
     if (!isLive) {
-      console.log('📴 Poll offline, not updating Firebase');
+      log('📴 Poll offline, not updating Firebase');
       return;
     }
 
@@ -161,20 +158,20 @@ useEffect(() => {
       ...updates
     };
 
-    console.log('📤 Updating Firebase with:', data);
+    log('📤 Updating Firebase with:', data);
 
     try {
       await set(pollRef, data);
-      console.log('✅ Firebase update successful');
+      log('✅ Firebase update successful');
       setFirebaseError(null);
     } catch (error) {
-      console.error('❌ Firebase update error:', error);
+      if (import.meta.env.DEV) console.error('❌ Firebase update error:', error);
       setFirebaseError(error.message);
     }
   };
 
   const vote = (option) => {
-    console.log('🗳️ Vote cast for:', option);
+    log('🗳️ Vote cast for:', option);
     const newVotes = { ...votes, [option]: (votes[option] || 0) + 1 };
     setVotes(newVotes);
     updateFirebase({ votes: newVotes });
@@ -247,17 +244,19 @@ useEffect(() => {
 
   const toggleLive = () => {
     const newLiveState = !isLive;
-    console.log('🔄 Toggling live state to:', newLiveState);
+    log('🔄 Toggling live state to:', newLiveState);
     setIsLive(newLiveState);
-    
+
     if (newLiveState) {
-      console.log('🚀 Poll is now LIVE! Poll ID:', pollId);
-      console.log('🔗 Voting URL:', `${window.location.origin}/vote/${pollId}`);
+      log('🚀 Poll is now LIVE! Poll ID:', pollId);
+      log('🔗 Voting URL:', `${window.location.origin}/vote/${pollId}`);
     } else {
-      console.log('⏹️ Poll stopped');
+      log('⏹️ Poll stopped');
       // Update Firebase to mark poll as offline
       if (pollId) {
-        set(ref(database, `polls/${pollId}/isLive`), false).catch(console.error);
+        set(ref(database, `polls/${pollId}/isLive`), false).catch(
+          (e) => { if (import.meta.env.DEV) console.error(e); }
+        );
       }
     }
   };

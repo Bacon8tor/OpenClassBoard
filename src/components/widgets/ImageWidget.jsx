@@ -24,10 +24,19 @@ export default function ImageWidget({ onRemove, onRename, position, registerRef,
   };
 
   const handleUrlSubmit = (url) => {
-    if (url.trim()) {
-      setImageUrl(url.trim());
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    try {
+      const parsed = new URL(trimmed);
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        alert('Only http:// and https:// image URLs are allowed.');
+        return;
+      }
+      setImageUrl(parsed.href);
       setImageFile(null);
       setShowUrlInput(false);
+    } catch {
+      alert('Invalid URL. Please enter a full URL starting with http:// or https://');
     }
   };
 
@@ -168,7 +177,7 @@ export default function ImageWidget({ onRemove, onRename, position, registerRef,
                     borderRadius: "4px"
                   }}
                   onError={() => {
-                    console.error("Failed to load image:", imageUrl);
+                    if (import.meta.env.DEV) console.error("Failed to load image:", imageUrl);
                     clearImage();
                   }}
                 />

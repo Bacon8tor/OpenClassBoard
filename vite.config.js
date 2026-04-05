@@ -6,5 +6,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: 'all'
+  },
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          firebase: ['firebase/app', 'firebase/database']
+        }
+      }
+    }
   }
 })

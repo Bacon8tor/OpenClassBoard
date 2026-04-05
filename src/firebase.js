@@ -2,7 +2,6 @@
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
-// Firebase config from environment variables (Vite style)
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -14,39 +13,43 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Validate required Firebase configuration
-const requiredConfig = {
-  'VITE_FIREBASE_API_KEY': firebaseConfig.apiKey,
-  'VITE_FIREBASE_AUTH_DOMAIN': firebaseConfig.authDomain,
-  'VITE_FIREBASE_DATABASE_URL': firebaseConfig.databaseURL,
-  'VITE_FIREBASE_PROJECT_ID': firebaseConfig.projectId,
-  'VITE_FIREBASE_STORAGE_BUCKET': firebaseConfig.storageBucket,
-  'VITE_FIREBASE_MESSAGING_SENDER_ID': firebaseConfig.messagingSenderId,
-  'VITE_FIREBASE_APP_ID': firebaseConfig.appId
-};
+const requiredKeys = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_DATABASE_URL',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID',
+];
 
-const missingConfig = Object.entries(requiredConfig).filter(([key, value]) => !value);
+const missingKeys = requiredKeys.filter(k => !import.meta.env[k]);
 
-if (missingConfig.length > 0) {
-  console.error('Missing required Firebase environment variables:', missingConfig.map(([key]) => key));
-  console.error('Please copy .env.example to .env and fill in your Firebase configuration');
+// Export a flag so the rest of the app can gate Firebase-dependent features
+export const firebaseConfigured = missingKeys.length === 0;
+
+let database = null;
+
+if (firebaseConfigured) {
+  const app = initializeApp(firebaseConfig);
+  database = getDatabase(app);
+} else {
+  if (import.meta.env.DEV) {
+    console.warn(
+      'Firebase not configured. Copy .env.example to .env and fill in your credentials.\n' +
+      'Missing: ' + missingKeys.join(', ')
+    );
+  }
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const database = getDatabase(app);
+export { database };
 
 // Poll data structure:
 // polls/
 //   {pollId}/
 //     title: "Poll Title"
 //     options: ["Option A", "Option B", "Option C"]
-//     votes: {
-//       "Option A": 5,
-//       "Option B": 3,
-//       "Option C": 2
-//     }
-//     voters: {
-//       "voter-id-1": "Option A",
-//       "voter-id-2": "Option B"
-//     }
+//     votes: { "Option A": 5, "Option B": 3 }
+//     voters: { "voter-id-1": "Option A" }
+//     created: <timestamp>
+//     isLive: true

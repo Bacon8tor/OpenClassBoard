@@ -1,4 +1,5 @@
 import React from "react";
+import { firebaseConfigured } from "../firebase";
 
 export default function BottomBar({
   barMinimized,
@@ -6,8 +7,7 @@ export default function BottomBar({
   glassButtonStyle,
   addWidget
 }) {
-  // Check if poll widget should be available
-  const POLL_ENABLED = import.meta.env.VITE_DISABLE_POLL !== 'true';
+  const POLL_ENABLED = import.meta.env.VITE_DISABLE_POLL !== 'true' && firebaseConfigured;
 
   const widgetTypes = [
     "stoplight",

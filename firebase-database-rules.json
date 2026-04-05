@@ -5,8 +5,8 @@
         // Anyone can read poll data (required for voting page)
         ".read": true,
 
-        // Allow writing if poll doesn't exist (creating new poll) or if poll exists (updating)
-        ".write": true,
+        // Allow creating a new poll OR updating an existing live poll
+        ".write": "!data.exists() || data.child('isLive').val() == true",
 
         // Title validation
         "title": {
@@ -21,29 +21,35 @@
           }
         },
 
-        // Votes validation
+        // Votes validation - counts must be non-negative and can only increase (no vote removal)
         "votes": {
           "$option": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000"
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000 && (!data.exists() || newData.val() >= data.val())"
           }
         },
 
-        // Voters tracking - prevent changing once set
+        // Voters tracking - once a voter entry is set, it cannot be changed or deleted
         "voters": {
           "$voterId": {
-            ".validate": "newData.isString() && newData.val().length <= 100",
-            ".write": "!data.exists() || newData.val() == data.val()"
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100",
+            ".write": "!data.exists()"
           }
         },
 
-        // Created timestamp validation
+        // Created timestamp - only set on creation, cannot be changed
         "created": {
-          ".validate": "newData.isNumber() && newData.val() <= now"
+          ".validate": "newData.isNumber() && newData.val() <= now",
+          ".write": "!data.exists()"
         },
 
         // Live status validation
         "isLive": {
           ".validate": "newData.isBoolean()"
+        },
+
+        // lastVote timestamp
+        "lastVote": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
         }
       }
     },

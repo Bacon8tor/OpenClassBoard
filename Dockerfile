@@ -1,19 +1,33 @@
-FROM node:22-alpine
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM node:22-alpine AS builder
 
-# Update Alpine packages to fix BusyBox vulnerabilities
+# Update Alpine packages to fix known CVEs
 RUN apk update && apk upgrade --no-cache
-
-# Update npm to latest version to fix security vulnerabilities
-RUN npm install -g npm@latest
 
 WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm install
+RUN npm ci --ignore-scripts
 
 COPY . .
 
-EXPOSE 5173
+# Build-time flag to disable poll feature (set to "true" for nopoll image)
+ARG VITE_DISABLE_POLL=false
+ENV VITE_DISABLE_POLL=$VITE_DISABLE_POLL
 
-CMD ["npm", "run", "dev"]
+RUN npm run build
+
+# ── Stage 2: Serve ─────────────────────────────────────────────────────────────
+FROM node:22-alpine AS runner
+
+RUN apk update && apk upgrade --no-cache && \
+    npm install -g serve --ignore-scripts && \
+    rm -rf /root/.npm
+
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+
+# serve: SPA mode (-s), port 3000, no directory listings
+CMD ["serve", "-s", "dist", "-l", "3000"]

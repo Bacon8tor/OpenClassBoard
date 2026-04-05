@@ -13,12 +13,7 @@ export default function NamePickerWidget({ onRemove, onRename, position, registe
   const [selected, setSelected] = useState("");
   const [uniquePick, setUniquePick] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [editingNames, setEditingNames] = useState("");
-
-  // Initialize editing names from current names
-  useEffect(() => {
-    setEditingNames(names.join(", "));
-  }, []);
+  const [editingNames, setEditingNames] = useState(() => names.join(", "));
 
   const pick = () => {
     if (names.length === 0) return;

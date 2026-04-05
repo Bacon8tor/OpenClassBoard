@@ -1,4 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+const log = (...args) => { if (import.meta.env.DEV) console.log(...args); };
+const LAYOUT_VERSION = 1;
 
 // Widgets
 import Stoplight from "./components/widgets/Stoplight";
@@ -13,15 +16,16 @@ import ScoreboardWidget from "./components/widgets/ScoreboardWidget";
 
 import BottomBar from "./components/BottomBar";
 
-// Conditionally import Poll-related components based on build flag
-const POLL_ENABLED = import.meta.env.VITE_DISABLE_POLL !== 'true';
+import { firebaseConfigured } from "./firebase";
+
+// Poll requires both the feature flag and a valid Firebase config
+const POLL_ENABLED = import.meta.env.VITE_DISABLE_POLL !== 'true' && firebaseConfigured;
 
 // Conditional imports for poll functionality
 let PollWidget = null;
 let VotingPage = null;
 
 if (POLL_ENABLED) {
-  // These will only be imported if POLL_ENABLED is true
   const PollWidgetModule = await import("./components/widgets/PollWidget");
   const VotingPageModule = await import("./components/VotingPage");
   PollWidget = PollWidgetModule.default;
@@ -41,13 +45,13 @@ function SimpleRouter() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  console.log('🔍 Current path:', currentPath);
+  log('🔍 Current path:', currentPath);
 
   // Check if we're on a voting page
   const voteMatch = currentPath.match(/^\/vote\/(.+)$/);
   if (voteMatch) {
     const pollId = voteMatch[1];
-    console.log('🗳️ Routing to voting page for poll:', pollId);
+    log('🗳️ Routing to voting page for poll:', pollId);
 
     if (!POLL_ENABLED || !VotingPage) {
       return (
@@ -78,7 +82,7 @@ function SimpleRouter() {
   }
 
   // Default to main classroom screen
-  console.log('🏫 Routing to main classroom screen');
+  log('🏫 Routing to main classroom screen');
   return <OpenClassScreen />;
 }
 
@@ -113,16 +117,27 @@ function OpenClassScreen() {
     transition: "all 0.2s ease"
   };
 
-  // Load saved layout
+  // Load saved layout (with schema version migration)
   useEffect(() => {
     const saved = localStorage.getItem("openClassBoard");
     if (saved) {
-      const data = JSON.parse(saved);
-      setWidgets(data.widgets || []);
-      setBgUrl(data.bgUrl || "");
-      setBgColor(data.bgColor || "#800cb6ff");
-      setWidgetTransparency(data.widgetTransparency ?? 80);
-      setHideTitles(data.hideTitles ?? false);
+      try {
+        const data = JSON.parse(saved);
+        // Migrate v0 (no version field) to v1: nothing structural to change yet
+        const version = data.version ?? 0;
+        if (version < LAYOUT_VERSION) {
+          data.version = LAYOUT_VERSION;
+          localStorage.setItem("openClassBoard", JSON.stringify(data));
+        }
+        setWidgets(data.widgets || []);
+        setBgUrl(data.bgUrl || "");
+        setBgColor(data.bgColor || "#800cb6ff");
+        setWidgetTransparency(data.widgetTransparency ?? 80);
+        setHideTitles(data.hideTitles ?? false);
+      } catch {
+        // Corrupted data — start fresh
+        localStorage.removeItem("openClassBoard");
+      }
     }
   }, []);
 
@@ -159,36 +174,46 @@ function OpenClassScreen() {
     ]);
   };
 
-  const removeWidget = id =>
-    setWidgets(prev => prev.filter(w => w.id !== id));
-  
-  const renameWidget = (id, newTitle) =>
+  const removeWidget = useCallback(id =>
+    setWidgets(prev => prev.filter(w => w.id !== id)), []);
+
+  const renameWidget = useCallback((id, newTitle) =>
     setWidgets(prev =>
       prev.map(w => (w.id === id ? { ...w, title: newTitle } : w))
-    );
+    ), []);
+
+  const extractWidgetPos = (w) => {
+    const getPos = widgetRefs.current[w.id];
+    const posData = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
+    // Separate x/y/width/height from any widget-specific data returned by registerRef
+    const { x, y, width, height, ...widgetSpecific } = posData;
+    const position = { x, y, width, height };
+    const widgetData = Object.keys(widgetSpecific).length > 0 ? widgetSpecific : w.widgetData;
+    return { ...w, position, widgetData };
+  };
 
   const saveNamedScreen = name => {
     if (!name) return alert("Provide a name!");
-    const widgetsWithPos = widgets.map(w => {
-      const getPos = widgetRefs.current[w.id];
-      const posData = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
-
-      // Extract position and widget-specific data
-      const { colors, ...position } = posData;
-      const widgetData = colors ? { colors } : w.widgetData;
-
-      return { ...w, position, widgetData };
-    });
-    const data = { widgets: widgetsWithPos, bgUrl, bgColor, widgetTransparency, hideTitles };
-    const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
-    savedScreens[name] = data;
-    localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
-    localStorage.setItem("openClassBoard", JSON.stringify(data));
-    alert(`Screen saved as "${name}"`);
+    const widgetsWithPos = widgets.map(extractWidgetPos);
+    const data = { version: LAYOUT_VERSION, widgets: widgetsWithPos, bgUrl, bgColor, widgetTransparency, hideTitles };
+    try {
+      const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
+      savedScreens[name] = data;
+      localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
+      localStorage.setItem("openClassBoard", JSON.stringify(data));
+      alert(`Screen saved as "${name}"`);
+    } catch {
+      alert("Failed to save screen. Storage may be full.");
+    }
   };
 
   const loadNamedScreen = name => {
-    const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
+    let savedScreens;
+    try {
+      savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
+    } catch {
+      savedScreens = {};
+    }
     const data = savedScreens[name];
     if (!data) return alert(`No saved screen found: ${name}`);
     setWidgets(data.widgets || []);
@@ -200,14 +225,23 @@ function OpenClassScreen() {
   };
 
   const deleteNamedScreen = name => {
-    const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
-    delete savedScreens[name];
-    localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
-    setSaveName("");
+    try {
+      const savedScreens = JSON.parse(localStorage.getItem("namedScreens") || "{}");
+      delete savedScreens[name];
+      localStorage.setItem("namedScreens", JSON.stringify(savedScreens));
+      setSaveName("");
+    } catch {
+      // ignore storage errors on delete
+    }
   };
 
-  const getSavedScreenNames = () =>
-    Object.keys(JSON.parse(localStorage.getItem("namedScreens") || "{}"));
+  const getSavedScreenNames = () => {
+    try {
+      return Object.keys(JSON.parse(localStorage.getItem("namedScreens") || "{}"));
+    } catch {
+      return [];
+    }
+  };
 
   const handleFile = file => {
     if (!file) return;
@@ -217,18 +251,13 @@ function OpenClassScreen() {
   // Auto-save current layout when widgets change
   useEffect(() => {
     const saveCurrentLayout = () => {
-      const widgetsWithPos = widgets.map(w => {
-        const getPos = widgetRefs.current[w.id];
-        const posData = getPos ? getPos() : w.position || { x: 40, y: 40, width: 200, height: 150 };
-
-        // Extract position and widget-specific data
-        const { colors, ...position } = posData;
-        const widgetData = colors ? { colors } : w.widgetData;
-
-        return { ...w, position, widgetData };
-      });
-      const data = { widgets: widgetsWithPos, bgUrl, bgColor, widgetTransparency, hideTitles };
-      localStorage.setItem("openClassBoard", JSON.stringify(data));
+      const widgetsWithPos = widgets.map(extractWidgetPos);
+      const data = { version: LAYOUT_VERSION, widgets: widgetsWithPos, bgUrl, bgColor, widgetTransparency, hideTitles };
+      try {
+        localStorage.setItem("openClassBoard", JSON.stringify(data));
+      } catch {
+        // Storage full — silently skip auto-save
+      }
     };
 
     const timeoutId = setTimeout(saveCurrentLayout, 1000);
@@ -348,6 +377,7 @@ function OpenClassScreen() {
             <button
               style={{ ...glassButtonStyle, marginTop: 12, width: "100%" }}
               onClick={() => {
+                if (!confirm("Reset the layout? All widgets and background settings will be cleared.")) return;
                 setWidgets([]);
                 setBgUrl("");
                 setBgColor("#800cb6ff");
@@ -356,17 +386,14 @@ function OpenClassScreen() {
             >
               Reset Layout
             </button>
-            <br />
-            <br />
-            
-            <div style={{ fontSize: 12, color: "#555", textAlign: "center" }}>
-              <p>OpenClassBoard was made and is maintained by a solo developer. 
+            <div style={{ marginTop: 16, fontSize: 12, color: "#555", textAlign: "center" }}>
+              <p>OpenClassBoard was made and is maintained by a solo developer.
                 If you find it useful, please consider supporting my work so that I can continue hosting the site.
               </p>
             </div>
             <div style={{ justifyContent: "center" }}>
-              <a href="https://www.buymeacoffee.com/bacon8tor" target="_blank">
-                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" />
+              <a href="https://www.buymeacoffee.com/bacon8tor" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=bacon8tor&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a coffee" />
               </a>
             </div>
             <div style={{ justifyContent: "center" }}>
@@ -400,7 +427,6 @@ function OpenClassScreen() {
       {/* Widgets */}
       {widgets.map(w => {
         const commonProps = {
-          key: w.id,
           onRemove: () => removeWidget(w.id),
           onRename: t => renameWidget(w.id, t),
           position: w.position,
@@ -415,25 +441,25 @@ function OpenClassScreen() {
 
         switch (w.type) {
           case "stoplight":
-            return <Stoplight {...commonProps} />;
+            return <Stoplight key={w.id} {...commonProps} />;
           case "clock":
-            return <ClockWidget {...commonProps} />;
+            return <ClockWidget key={w.id} {...commonProps} />;
           case "timer":
-            return <TimerWidget {...commonProps} />;
+            return <TimerWidget key={w.id} {...commonProps} />;
           case "poll":
-            return POLL_ENABLED && PollWidget ? <PollWidget {...commonProps} /> : null;
+            return POLL_ENABLED && PollWidget ? <PollWidget key={w.id} {...commonProps} /> : null;
           case "dice":
-            return <DiceWidget {...commonProps} />;
+            return <DiceWidget key={w.id} {...commonProps} />;
           case "namepicker":
-            return <NamePickerWidget {...commonProps} />;
+            return <NamePickerWidget key={w.id} {...commonProps} />;
           case "conversion":
-            return <ConversionWidget {...commonProps} />;
+            return <ConversionWidget key={w.id} {...commonProps} />;
           case "image":
-            return <ImageWidget {...commonProps} />;
+            return <ImageWidget key={w.id} {...commonProps} />;
           case "text":
-            return <TextWidget {...commonProps} />;
+            return <TextWidget key={w.id} {...commonProps} />;
           case "scoreboard":
-            return <ScoreboardWidget {...commonProps} />;
+            return <ScoreboardWidget key={w.id} {...commonProps} />;
           default:
             return null;
         }

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import DOMPurify from "dompurify";
 import useDraggable from "../../hooks/useDraggable";
 import useWidgetDimensions from "../../hooks/useWidgetDimensions";
 import WidgetWrapper from "../WidgetWrapper";
@@ -11,14 +12,14 @@ export default function TextWidget({ onRemove, onRename, position, registerRef, 
   useEffect(() => {
     if (registerRef) registerRef(() => {
       const pos = getPosition();
-      return { ...pos, content: editorRef.current?.innerHTML || "" };
+      return { ...pos, content: DOMPurify.sanitize(editorRef.current?.innerHTML || "") };
     });
   }, [getPosition, registerRef]);
 
   // Initialize content from saved data
   useEffect(() => {
     if (widgetData?.content && editorRef.current) {
-      editorRef.current.innerHTML = widgetData.content;
+      editorRef.current.innerHTML = DOMPurify.sanitize(widgetData.content);
     }
   }, [widgetData]);
 
@@ -39,7 +40,16 @@ export default function TextWidget({ onRemove, onRename, position, registerRef, 
   const insertLink = () => {
     const url = prompt('Enter URL:');
     if (url) {
-      executeCommand('createLink', url);
+      try {
+        const parsed = new URL(url);
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          alert('Only http:// and https:// URLs are allowed.');
+          return;
+        }
+        executeCommand('createLink', parsed.href);
+      } catch {
+        alert('Invalid URL. Please enter a full URL starting with http:// or https://');
+      }
     }
   };
 
@@ -160,8 +170,8 @@ export default function TextWidget({ onRemove, onRename, position, registerRef, 
             suppressContentEditableWarning={true}
             onFocus={() => setShowToolbar(true)}
             onInput={(e) => {
-              // Auto-save content changes
-              const content = e.target.innerHTML;
+              // Auto-save content changes (sanitized)
+              const content = DOMPurify.sanitize(e.target.innerHTML);
               if (registerRef) {
                 registerRef(() => {
                   const pos = getPosition();

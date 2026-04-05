@@ -228,7 +228,7 @@ export default function ConversionWidget({ onRemove, onRename, position, registe
           }}>
             <div>
               <div style={{ 
-                fontSize: `${resultSize * 5}px`,
+                fontSize: `${resultSize}px`,
                 fontWeight: "bold",
                 color: "#2e7d32",
                 fontFamily: "monospace",
