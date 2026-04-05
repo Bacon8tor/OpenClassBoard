@@ -2,7 +2,16 @@
   "name": "openclassboard",
   "private": true,
   "version": "0.1.0",
+  "description": "Interactive classroom display board with draggable widgets — polls, timers, dice, scoreboards, and more.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bacon8tor/OpenClassBoard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Bacon8tor/OpenClassBoard/issues"
+  },
+  "homepage": "https://openclassboard.com",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
